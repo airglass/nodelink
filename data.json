@@ -1,0 +1,198 @@
+{
+  "width": 600,
+  "height": 400,
+  "hosts": [
+    {
+      "id": "file-01",
+      "x": 32,
+      "y": 44,
+      "hue": 60,
+      "width": 175,
+      "height": 108,
+      "name": "MP3-01",
+      "imports": [],
+      "exports": [
+        {
+          "id": 1,
+          "name": "File URI",
+          "processor": "fileURI"
+        }
+      ]
+    },
+    {
+      "id": "file-02",
+      "x": 32,
+      "y": 212,
+      "hue": 60,
+      "width": 181,
+      "height": 108,
+      "name": "MP3-02",
+      "imports": [],
+      "exports": [
+        {
+          "id": 1,
+          "name": "File URI",
+          "processor": "fileURI"
+        }
+      ]
+    },
+    {
+      "id": "file-03",
+      "x": 36,
+      "y": 394,
+      "hue": 60,
+      "width": 181,
+      "height": 108,
+      "name": "MP3-03",
+      "imports": [],
+      "exports": [
+        {
+          "id": 1,
+          "name": "File URI",
+          "processor": "fileURI"
+        }
+      ]
+    },
+    {
+      "id": "loadfile-01",
+      "x": 304,
+      "y": 38,
+      "hue": 30,
+      "width": 240,
+      "height": 156,
+      "name": "File Loader",
+      "imports": [
+        {
+          "name": "URI"
+        }
+      ],
+      "exports": [
+        {
+          "id": 1,
+          "name": "AudioBuffer",
+          "processor": "getAudioBuffer"
+        }
+      ]
+    },
+    {
+      "id": "loadfile-02",
+      "x": 302,
+      "y": 216,
+      "hue": 30,
+      "width": 240,
+      "height": 156,
+      "name": "File Loader",
+      "imports": [
+        {
+          "name": "URI"
+        }
+      ],
+      "exports": [
+        {
+          "id": 1,
+          "name": "AudioBuffer",
+          "processor": "getAudioBuffer"
+        }
+      ]
+    },
+    {
+      "id": "loadfile-03",
+      "x": 302,
+      "y": 396,
+      "hue": 30,
+      "width": 240,
+      "height": 156,
+      "name": "File Loader",
+      "imports": [
+        {
+          "name": "URI"
+        }
+      ],
+      "exports": [
+        {
+          "id": 1,
+          "name": "AudioBuffer",
+          "processor": "getAudioBuffer"
+        }
+      ]
+    },
+    {
+      "id": "source-01",
+      "x": 618,
+      "y": 36,
+      "hue": 180,
+      "width": 250,
+      "height": 156,
+      "name": "AudioSource",
+      "imports": [
+        {
+          "name": "buffer"
+        }
+      ],
+      "exports": [
+        {
+          "id": 1,
+          "name": "AudioSource",
+          "processor": "createAudioSource"
+        }
+      ]
+    },
+    {
+      "id": "source-02",
+      "x": 620,
+      "y": 212,
+      "hue": 180,
+      "width": 250,
+      "height": 156,
+      "name": "AudioSource",
+      "imports": [
+        {
+          "name": "buffer"
+        }
+      ],
+      "exports": [
+        {
+          "id": 1,
+          "name": "AudioSource",
+          "processor": "createAudioSource"
+        }
+      ]
+    },
+    {
+      "id": "source-03",
+      "x": 620,
+      "y": 392,
+      "hue": 180,
+      "width": 250,
+      "height": 156,
+      "name": "AudioSource",
+      "imports": [
+        {
+          "name": "buffer"
+        }
+      ],
+      "exports": [
+        {
+          "id": 1,
+          "name": "AudioSource",
+          "processor": "createAudioSource"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "x": 968,
+      "y": 306,
+      "hue": 320,
+      "width": 200,
+      "height": 108,
+      "name": "Speaker",
+      "imports": [
+        {
+          "name": "AudioNode"
+        }
+      ],
+      "exports": []
+    }
+  ]
+}

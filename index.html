@@ -5,13 +5,13 @@
   <style>
     body {
       background-color: #fff;
-      margin: 20px;
+      margin: 10px;
     }
 
     #wrap {
       position: relative;
-      background-color: #9C27B0;
-      border-radius: 6px;
+      background-color: #111;
+      border-radius: 4px;
       overflow: hidden;
     }
 
@@ -26,46 +26,14 @@
 <body>
   <div id="wrap"></div>
   <div id="info"></div>
-  <button id="play">Play</button>
-  <script src="../airglass.js"></script>
+  <!-- <button id="play">Play</button> -->
+  <script src="airglass.js"></script>
   <script src="sketch.js"></script>
   <script>
 
-    document.querySelector('#play').addEventListener('click', function(){
-      play();
-    })
-
-    async function play() {
-      let audioContext = new AudioContext();
-      let arrayBuffer = await getArrayBuffer('bensound-summer.mp3');
-      let audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      let bufferSource = audioContext.createBufferSource();
-      bufferSource.buffer = audioBuffer;
-      bufferSource.connect(audioContext.destination)
-      bufferSource.start(0);
-
-      console.log(audioContext.destination)
-    }
-
-    async function decodeAudioData(arrayBuffer){
-      return new Promises((resolve, reject) => {
-        let audioContext = new AudioContext();
-      })
-    }
-
-    async function getArrayBuffer(url) {
-      return new Promise((resolve, reject) => {
-        let client = new XMLHttpRequest();
-        client.responseType = 'arraybuffer';
-        client.onreadystatechange = function () {
-          if (client.status == 200 && client.readyState == 4) {
-            resolve(client.response);
-          }
-        }
-        client.open('GET', url, true);
-        client.send(null);
-      })
-    }
+    // document.querySelector('#play').addEventListener('click', function(){
+    //   play();
+    // })
   </script>
 </body>
 
