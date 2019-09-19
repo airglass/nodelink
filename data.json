@@ -140,7 +140,7 @@
           "id": 1,
           "name": "Source",
           "params": {},
-          "processor": "createAnalyserNode"
+          "processor": "analyserCreator"
         }
       ]
     },
@@ -155,15 +155,15 @@
       "imports": [
         {
           "name": "source",
-          "processor": "playSource"
+          "exec": "speaker"
         },
         {
           "name": "source",
-          "processor": "playSource"
+          "exec": "speaker"
         },
         {
           "name": "source",
-          "processor": "playSource"
+          "exec": "speaker"
         }
       ],
       "exports": []

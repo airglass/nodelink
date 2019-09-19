@@ -16,7 +16,6 @@ let processors = {
       createLineBySourcePort(this);
     }
     if (type == 'disconnect') {
-      targetPort._data = null;
       deleteLineByTargetPorts(targetPort);
     }
   },
@@ -36,72 +35,45 @@ let processors = {
   audioSourceCreator: function (type, targetPort) {
     if (type == 'connect') {
       let buffer = this._node.imports[this._params.buffer]._data;
-      if(!buffer) throw new Error('request audio buffer');
+      if (!buffer) throw new Error('request audio buffer');
       let source = audioContext.createBufferSource();
       source.buffer = buffer;
       targetPort._data = source;
-      console.log(targetPort)
+      createLineBySourcePort(this);
+    }
+    if (type == 'disconnect') {
+      deleteLineByTargetPorts(targetPort);
+    }
+    targetPort._exec &&
+      execs[targetPort._exec] &&
+      execs[targetPort._exec].call(targetPort, type);
+  },
+  analyserCreator: function (type) {
+    if (type == 'connect') {
+
     }
     if (type == 'disconnect') {
 
     }
-  },
-  createAudioSource: function (type, cb) {
-    switch (type) {
-      case 'connect':
-        let audioBufferPort = this._node.imports[0]._sourcePort;
-        let audioBuffer = audioBufferPort && audioBufferPort._data;
-        if (!audioBuffer) {
-          throw new Error('request audio buffer');
-        } else {
-          let audioSource = audioContext.createBufferSource();
-          audioSource.buffer = audioBuffer;
-          this._data = audioSource;
-          if (this._targetPort._node.name.toLowerCase() == 'speaker') {
-            audioSource.connect(audioContext.destination);
-            audioSource._isStart = true;
-            audioSource.start(0, 0);
-          }
-          cb();
-        }
-        break;
-      case 'disconnect':
-        if (this._targetPort._node.name.toLowerCase() == 'speaker') {
-          this._data.disconnect();
-        }
-        cb();
-        break;
-    }
-  },
-  createAnalyserNode: function (type, cb) {
-    switch (type) {
-      case 'connect':
-        let audioSourcePort = this._node.imports[0]._sourcePort;
-        let audioSource = audioSourcePort && audioSourcePort._data;
-        if (!audioSource) {
-          throw new Error('request audio source')
-        } else {
-          this._data = audioSource;
-          if (this._targetPort._node.name.toLowerCase() == 'speaker') {
-            audioSource.connect(audioContext.destination);
-            if (!audioSource._isStart) {
-              audioSource.start(0, 0);
-              audioSource._isStart = true;
-            }
-            console.log(audioSource)
-            cb();
-          }
-        }
-        break;
-      case 'disconnect':
-        if (this._targetPort._node.name.toLowerCase() == 'speaker') {
-          this._data.disconnect();
-        }
-        cb();
-        break;
-    }
   }
 }
+let execs = {
+  speaker: function (type) {
+    let source = this._data;
+    if (!source) throw new Error('request audio source');
+    if (type == 'connect') {
+      source.connect(audioContext.destination);
+      if(!source._isStart){
+        source.start(0, 0);
+        source._isStart = true;
+      }
+      console.log(source)
+    }
+    if (type == 'disconnect') {
+      source.disconnect();
+    }
+  },
+};
 
 renderers.node = new airglass.Renderer(
   wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
@@ -187,7 +159,7 @@ loadData('data.json')
             _sourceNodeId: portData.sourceNodeId,
             _sourcePortId: portData.sourcePortId,
             _node: _module,
-            _processor: portData.processor,
+            _exec: portData.exec,
             x: x,
             y: y,
             width: portSize,
@@ -473,7 +445,7 @@ function exportData() {
             sourceNodeId: importPort._sourceNodeId,
             sourcePortId: importPort._sourcePortId,
             name: importPort.name,
-            processor: importPort._processor,
+            exec: importPort._exec,
           }
         }),
         exports: hostChild.exports.map(exportPort => {
