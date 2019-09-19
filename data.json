@@ -1,195 +1,169 @@
 {
-  "width": 600,
-  "height": 400,
+  "width": 800,
+  "height": 600,
   "hosts": [
     {
       "id": "file-01",
       "x": 32,
       "y": 44,
       "hue": 60,
-      "width": 175,
-      "height": 108,
-      "name": "MP3-01",
+      "width": 155,
+      "height": 184,
+      "name": "音频文件",
       "imports": [],
       "exports": [
         {
+          "id": 0,
+          "name": "01.mp3",
+          "params": {},
+          "processor": "getFileUri"
+        },
+        {
           "id": 1,
-          "name": "File URI",
-          "processor": "fileURI"
+          "name": "02.mp3",
+          "params": {},
+          "processor": "getFileUri"
+        },
+        {
+          "id": 2,
+          "name": "03.mp3",
+          "params": {},
+          "processor": "getFileUri"
         }
       ]
     },
     {
-      "id": "file-02",
-      "x": 32,
-      "y": 212,
-      "hue": 60,
-      "width": 181,
-      "height": 108,
-      "name": "MP3-02",
-      "imports": [],
-      "exports": [
-        {
-          "id": 1,
-          "name": "File URI",
-          "processor": "fileURI"
-        }
-      ]
-    },
-    {
-      "id": "file-03",
-      "x": 36,
-      "y": 394,
-      "hue": 60,
-      "width": 181,
-      "height": 108,
-      "name": "MP3-03",
-      "imports": [],
-      "exports": [
-        {
-          "id": 1,
-          "name": "File URI",
-          "processor": "fileURI"
-        }
-      ]
-    },
-    {
-      "id": "loadfile-01",
+      "id": "loadfile",
       "x": 304,
       "y": 38,
       "hue": 30,
-      "width": 240,
-      "height": 156,
-      "name": "File Loader",
+      "height": 308,
+      "name": "文件转类型化数组",
       "imports": [
         {
-          "name": "URI"
+          "name": "uri"
+        },
+        {
+          "name": "uri"
+        },
+        {
+          "name": "uri"
         }
       ],
       "exports": [
         {
-          "id": 1,
-          "name": "AudioBuffer",
-          "processor": "getAudioBuffer"
-        }
-      ]
-    },
-    {
-      "id": "loadfile-02",
-      "x": 302,
-      "y": 216,
-      "hue": 30,
-      "width": 240,
-      "height": 156,
-      "name": "File Loader",
-      "imports": [
-        {
-          "name": "URI"
-        }
-      ],
-      "exports": [
+          "id": 0,
+          "name": "ArrayBuffer",
+          "params": {
+            "uri": 0
+          },
+          "processor": "File2ArrayBuffer"
+        },
         {
           "id": 1,
-          "name": "AudioBuffer",
-          "processor": "getAudioBuffer"
-        }
-      ]
-    },
-    {
-      "id": "loadfile-03",
-      "x": 302,
-      "y": 396,
-      "hue": 30,
-      "width": 240,
-      "height": 156,
-      "name": "File Loader",
-      "imports": [
+          "name": "ArrayBuffer",
+          "params": {
+            "uri": 1
+          },
+          "processor": "File2ArrayBuffer"
+        },
         {
-          "name": "URI"
-        }
-      ],
-      "exports": [
-        {
-          "id": 1,
-          "name": "AudioBuffer",
-          "processor": "getAudioBuffer"
+          "id": 2,
+          "name": "ArrayBuffer",
+          "params": {
+            "uri": 2
+          },
+          "processor": "File2ArrayBuffer"
         }
       ]
     },
     {
       "id": "source-01",
-      "x": 618,
+      "x": 660,
       "y": 36,
       "hue": 180,
-      "width": 250,
-      "height": 156,
-      "name": "AudioSource",
+      "height": 308,
+      "name": "音频源生成器",
       "imports": [
+        {
+          "name": "buffer"
+        },
+        {
+          "name": "buffer"
+        },
         {
           "name": "buffer"
         }
       ],
       "exports": [
         {
+          "id": 0,
+          "name": "Source",
+          "params": {
+            "buffer": 0
+          },
+          "processor": "audioSourceCreator"
+        },
+        {
           "id": 1,
-          "name": "AudioSource",
-          "processor": "createAudioSource"
+          "name": "Source",
+          "params": {
+            "buffer": 1
+          },
+          "processor": "audioSourceCreator"
+        },
+        {
+          "id": 1,
+          "name": "Source",
+          "params": {
+            "buffer": 2
+          },
+          "processor": "audioSourceCreator"
         }
       ]
     },
     {
-      "id": "source-02",
-      "x": 620,
-      "y": 212,
-      "hue": 180,
-      "width": 250,
+      "id": "analyser",
+      "x": 908,
+      "y": 704,
+      "hue": 320,
+      "width": 200,
       "height": 156,
-      "name": "AudioSource",
+      "name": "波谱生成器",
       "imports": [
         {
-          "name": "buffer"
+          "name": "audioContext"
         }
       ],
       "exports": [
         {
           "id": 1,
-          "name": "AudioSource",
-          "processor": "createAudioSource"
-        }
-      ]
-    },
-    {
-      "id": "source-03",
-      "x": 620,
-      "y": 392,
-      "hue": 180,
-      "width": 250,
-      "height": 156,
-      "name": "AudioSource",
-      "imports": [
-        {
-          "name": "buffer"
-        }
-      ],
-      "exports": [
-        {
-          "id": 1,
-          "name": "AudioSource",
-          "processor": "createAudioSource"
+          "name": "Source",
+          "params": {},
+          "processor": "createAnalyserNode"
         }
       ]
     },
     {
       "id": 5,
-      "x": 968,
-      "y": 306,
-      "hue": 320,
-      "width": 200,
-      "height": 108,
-      "name": "Speaker",
+      "x": 1174,
+      "y": 112,
+      "hue": 170,
+      "width": 134,
+      "height": 184,
+      "name": "扬声器",
       "imports": [
         {
-          "name": "AudioNode"
+          "name": "source",
+          "processor": "playSource"
+        },
+        {
+          "name": "source",
+          "processor": "playSource"
+        },
+        {
+          "name": "source",
+          "processor": "playSource"
         }
       ],
       "exports": []

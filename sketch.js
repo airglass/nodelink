@@ -1,7 +1,7 @@
 let wrapEl = document.querySelector('#wrap');
 let lastEventPosition;
 let touchstartPosition;
-let activeHost;
+let activeNode;
 let activeSourcePort;
 let activeTempLink;
 let activeTargetPort;
@@ -10,85 +10,100 @@ let canvasWidth;
 let canvasHeight;
 let audioContext = new AudioContext();
 let processors = {
-  fileURI: function (type) {
-    console.log(this)
-    switch (type) {
-      case 'connect':
-        this.data = `${this.exports[0].name}.mp3`;
-        createLineBySourcePort(port);
-        break;
-      case 'disconnect':
-        break;
+  getFileUri: function (type, targetPort) {
+    if (type == 'connect') {
+      targetPort._data = this.name;
+      createLineBySourcePort(this);
+    }
+    if (type == 'disconnect') {
+      targetPort._data = null;
+      deleteLineByTargetPorts(targetPort);
     }
   },
-  FileLoader: function (type) {
-    switch (type) {
-      case 'connect':
-        // 如果AudioBuffer还在就不要再次加载了，提升速度
-        let url = this.imports[0].sourcePort && this.imports[0].sourcePort._node.data;
-        console.log(url)
-        if (!url) {
-          showTip('error', 'request mp3 file uri');
-          break;
-        }
-        let client = new XMLHttpRequest();
-        client.responseType = 'arraybuffer';
-        client.onreadystatechange = () => {
-          if (client.status == 200 && client.readyState == 4) {
-            audioContext.decodeAudioData(client.response)
-              .then(audioBuffer => {
-                this.data = audioBuffer;
-                createLineBySourcePort(port);
-              })
-          }
-        }
-        client.open('GET', url, true);
-        client.send(null);
-        break;
-      case 'disconnect':
-        deleteLineByTargetPorts(port);
-        break;
+  File2ArrayBuffer: function (type, targetPort) {
+    if (type == 'connect') {
+      let uri = this._node.imports[this._params.uri]._data;
+      if (!uri) throw new Error('request uri');
+      getAudioBufferByFileURI(uri, audioBuffer => {
+        targetPort._data = audioBuffer;
+        createLineBySourcePort(this);
+      })
     }
-  },
-  createAudioSource: function (type) {
-    switch (type) {
-      case 'connect':
-        let audioBuffer = this.imports[0].sourcePort &&
-          this.imports[0].sourcePort._node.data;
-        if (!audioBuffer) {
-          showTip('error', 'request audio buffer');
-          break;
-        } else {
-          let bufferSource = audioContext.createBufferSource();
-          bufferSource.buffer = audioBuffer;
-          this.data = bufferSource;
-          if (port.targetPort._node.name.toLowerCase() == 'speaker') {
-            bufferSource.connect(audioContext.destination);
-            bufferSource.start(0, 0);
-            createLineBySourcePort(port);
-          }
-        }
-        break;
-      case 'disconnect':
-        deleteLineByTargetPorts(port)
-        break;
-    }
-  },
-  speaker: function (type) {
-    switch (type) {
-      case 'connect':
+    if (type == 'disconnect') {
 
+    }
+  },
+  audioSourceCreator: function (type, targetPort) {
+    if (type == 'connect') {
+      let buffer = this._node.imports[this._params.buffer]._data;
+      if(!buffer) throw new Error('request audio buffer');
+      let source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      targetPort._data = source;
+      console.log(targetPort)
+    }
+    if (type == 'disconnect') {
+
+    }
+  },
+  createAudioSource: function (type, cb) {
+    switch (type) {
+      case 'connect':
+        let audioBufferPort = this._node.imports[0]._sourcePort;
+        let audioBuffer = audioBufferPort && audioBufferPort._data;
+        if (!audioBuffer) {
+          throw new Error('request audio buffer');
+        } else {
+          let audioSource = audioContext.createBufferSource();
+          audioSource.buffer = audioBuffer;
+          this._data = audioSource;
+          if (this._targetPort._node.name.toLowerCase() == 'speaker') {
+            audioSource.connect(audioContext.destination);
+            audioSource._isStart = true;
+            audioSource.start(0, 0);
+          }
+          cb();
+        }
         break;
       case 'disconnect':
-        let bufferSource = port.sourcePort._node.data;
-        bufferSource.disconnect();
-        deleteLineByTargetPorts(port);
+        if (this._targetPort._node.name.toLowerCase() == 'speaker') {
+          this._data.disconnect();
+        }
+        cb();
+        break;
+    }
+  },
+  createAnalyserNode: function (type, cb) {
+    switch (type) {
+      case 'connect':
+        let audioSourcePort = this._node.imports[0]._sourcePort;
+        let audioSource = audioSourcePort && audioSourcePort._data;
+        if (!audioSource) {
+          throw new Error('request audio source')
+        } else {
+          this._data = audioSource;
+          if (this._targetPort._node.name.toLowerCase() == 'speaker') {
+            audioSource.connect(audioContext.destination);
+            if (!audioSource._isStart) {
+              audioSource.start(0, 0);
+              audioSource._isStart = true;
+            }
+            console.log(audioSource)
+            cb();
+          }
+        }
+        break;
+      case 'disconnect':
+        if (this._targetPort._node.name.toLowerCase() == 'speaker') {
+          this._data.disconnect();
+        }
+        cb();
         break;
     }
   }
 }
 
-renderers.host = new airglass.Renderer(
+renderers.node = new airglass.Renderer(
   wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
   new airglass.Scene,
 )
@@ -122,11 +137,10 @@ loadData('data.json')
     let hosts = data.hosts;
 
     let hostTBPadding = 10;
-    let hostLRPadding = 14;
+    let hostLRPadding = 0;
     let portMargin = 5 * devicePixelRatio;
     let portSize = 18;
-    let lineWidth = 3;
-    let nameFontSize = 15 * devicePixelRatio;
+    let nameFontSize = 13 * devicePixelRatio;
     let nameBarHeight = 50;
     let itemMargin = 10 * devicePixelRatio;
 
@@ -135,7 +149,7 @@ loadData('data.json')
       let hue = host.hue == 0 ? host.hue : host.hue || 60;
 
       let _module = new airglass.Node({
-        _id: host.id,
+        _nodeId: host.id,
         _hue: hue,
         x: host.x,
         y: host.y,
@@ -164,15 +178,16 @@ loadData('data.json')
         host.imports.length &&
         host.imports.map((portData, i) => {
           let x = _module.x;
-          let y = _module.y + nameBarHeight + hostTBPadding + exportPortsToTalHeight + portMargin * 1.5 + i * (portSize + portMargin * 2);
+          let y = _module.y + nameBarHeight + hostTBPadding + exportPortsToTalHeight + portMargin * 2 + i * (portSize + portMargin * 2);
           if (exportPortsToTalHeight) {
             y += portMargin;
           }
           let ellipse = new airglass.Item({
             _type: 'target',
-            _sourceHostId: portData.sourceHostId,
+            _sourceNodeId: portData.sourceNodeId,
             _sourcePortId: portData.sourcePortId,
             _node: _module,
+            _processor: portData.processor,
             x: x,
             y: y,
             width: portSize,
@@ -198,10 +213,11 @@ loadData('data.json')
           let y = _module.y + nameBarHeight + hostTBPadding + portMargin * 2 + i * (portSize + portMargin * 2);
           let ellipse = new airglass.Item({
             _type: 'source',
-            _hostId: host.id,
+            _nodeId: host.id,
             _portId: portData.id,
             _node: _module,
             _processor: portData.processor,
+            _params: portData.params || {},
             x: x,
             y: y,
             width: portSize,
@@ -229,28 +245,18 @@ loadData('data.json')
         }
       }
       _module.updatePath();
-      renderers.host.scene.add(_module);
+      renderers.node.scene.add(_module);
     });
 
     exportPorts.forEach(exportPort => {
       importPorts.forEach(importPort => {
-        if (importPort._sourceHostId == exportPort._hostId && importPort._sourcePortId == exportPort._portId) {
-          exportPort.targetPort = importPort;
-          importPort.sourcePort = exportPort;
-          let moduleLine = new airglass.BezierLine(
-            exportPort,
-            importPort
-          )
-          moduleLine.updatePath();
-          moduleLine.stroke = `hsl(${exportPort._node._hue}, 100%, 50%)`;
-          moduleLine.lineWidth = lineWidth;
-          renderers.link.scene.add(moduleLine);
+        if (importPort._sourceNodeId == exportPort._nodeId && importPort._sourcePortId == exportPort._portId) {
+          processing('connect', importPort, exportPort);
         }
       })
     })
 
-
-    renderers.host.render();
+    renderers.node.render();
     renderers.port.render();
     renderers.link.render();
   })
@@ -279,9 +285,9 @@ function rendererSubscribe(actor) {
         }
       }
 
-      let hosts = renderers.host.getElementsContainPoint(event);
-      if (hosts.length) {
-        activeHost = hosts[hosts.length - 1];
+      let nodes = renderers.node.getElementsContainPoint(event);
+      if (nodes.length) {
+        activeNode = nodes[nodes.length - 1];
         break touchstart;
       }
     }
@@ -307,22 +313,22 @@ function rendererSubscribe(actor) {
         break touchmove;
       }
 
-      if (activeHost) {
-        activeHost.set({
-          x: activeHost.x + event.x - lastEventPosition[0],
-          y: activeHost.y + event.y - lastEventPosition[1],
+      if (activeNode) {
+        activeNode.set({
+          x: activeNode.x + event.x - lastEventPosition[0],
+          y: activeNode.y + event.y - lastEventPosition[1],
         })
-        activeHost.updatePath();
-        renderers.host.render();
+        activeNode.updatePath();
+        renderers.node.render();
 
-        activeHost.imports.forEach(port => {
+        activeNode.imports.forEach(port => {
           port.set({
             x: port.x + event.x - lastEventPosition[0],
             y: port.y + event.y - lastEventPosition[1],
           })
           port.updatePath();
         })
-        activeHost.exports.forEach(port => {
+        activeNode.exports.forEach(port => {
           port.set({
             x: port.x + event.x - lastEventPosition[0],
             y: port.y + event.y - lastEventPosition[1],
@@ -344,23 +350,23 @@ function rendererSubscribe(actor) {
       let ports = renderers.port.getElementsContainPoint(event);
       if (ports.length) {
         let port = ports[ports.length - 1];
-        if (activeSourcePort && port !== activeSourcePort && port._type == 'target') {
-          if (!port._sourceHostId && !port.sourcePortId) {
+        if (activeSourcePort && !activeSourcePort._targetPort && port !== activeSourcePort) {
+          if (port._type == 'target' && !port._sourceNodeId && !port._sourcePortId) {
             processing('connect', port, activeSourcePort);
           }
         }
         if (port === activeTargetPort) {
-          if (port.sourcePort) {
+          if (port._sourcePort) {
             processing('disconnect', port);
           }
         }
       }
 
-      if (activeHost || activeSourcePort || activeTargetPort) {
+      if (activeNode || activeSourcePort || activeTargetPort) {
         exportData();
       }
 
-      activeHost = null;
+      activeNode = null;
       activeSourcePort = null;
       activeTargetPort = null;
     }
@@ -373,31 +379,45 @@ function processing(type, TP, SP) {
   let targetPort = TP;
   let sourcePort;
   let sourcePortProcessorName;
-  switch (type) {
-    case 'connect':
-      sourcePort = SP;
-      sourcePort._targetPort = targetPort;
-      targetPort._sourcePort = sourcePort;
-      targetPort._sourceHostId = sourcePort._hostId;
-      targetPort._sourcePortId = sourcePort._portId;
-      break;
-    case 'disconnect':
-      sourcePort = targetPort._sourcePort;
-      break;
+  if (type == 'connect') {
+    sourcePort = SP;
+    sourcePort._targetPort = targetPort;
+    targetPort._sourcePort = sourcePort;
+    targetPort._sourceNodeId = sourcePort._nodeId;
+    targetPort._sourcePortId = sourcePort._portId;
+  }
+  if (type == 'disconnect') {
+    sourcePort = targetPort._sourcePort;
   }
   sourcePortProcessorName = sourcePort._processor;
-  sourcePortProcessorName &&
-    processors[sourcePortProcessorName] &&
-    processors[sourcePortProcessorName].call(sourcePort, 'disconnect');
+
+  try {
+    sourcePortProcessorName &&
+      processors[sourcePortProcessorName] &&
+      processors[sourcePortProcessorName].call(sourcePort, type, targetPort);
+  } catch (e) {
+    showTip('error', e.message);
+    // 连接发生错误
+    if (type == 'connect') {
+      sourcePort._targetPort = null;
+      targetPort._sourcePort = null;
+      targetPort._sourceNodeId = null;
+      targetPort._sourcePortId = null;
+    }
+    // 断开连接发生错误
+    if (type == 'disconnect') {
+
+    }
+  }
 }
 
 function showTip(type, message) {
   switch (type) {
     case 'error':
-      console.error(message.toUpperCase());
+      console.error(message);
       break;
     case 'info':
-      console.info(message.toUpperCase());
+      console.info(message);
       break;
   }
 }
@@ -417,16 +437,16 @@ function createLineBySourcePort(sourcePort) {
 
 // 清除port循环引用关系
 // 清除line
-// 清除_sourceHostId和_sourcePortId
+// 清除_sourceNodeId和_sourcePortId
 // 更新渲染line的Glass（擦玻璃+重新画）
 function deleteLineByTargetPorts() {
   let targetPort = [].slice.call(arguments, 0);
   renderers.link.scene.children.forEach((link, linkIndex) => {
     targetPort.forEach(targetPort => {
       if (targetPort == link.endPoint) {
-        targetPort._sourcePort.targetPort = null;
+        targetPort._sourcePort._targetPort = null;
         targetPort._sourcePort = null;
-        targetPort._sourceHostId = undefined;
+        targetPort._sourceNodeId = undefined;
         targetPort._sourcePortId = undefined;
         renderers.link.scene.children.splice(linkIndex, 1);
       }
@@ -439,27 +459,28 @@ function exportData() {
   let data = {
     width: canvasWidth,
     height: canvasHeight,
-    hosts: renderers.host.scene.children.map(hostChild => {
+    hosts: renderers.node.scene.children.map(hostChild => {
       return {
-        id: hostChild._id,
+        id: hostChild._nodeId,
         x: hostChild.x,
         y: hostChild.y,
-        processor: hostChild._processor,
         hue: hostChild._hue,
         width: hostChild.width,
         height: hostChild.height,
         name: hostChild.name,
         imports: hostChild.imports.map(importPort => {
           return {
-            sourceHostId: importPort._sourceHostId,
+            sourceNodeId: importPort._sourceNodeId,
             sourcePortId: importPort._sourcePortId,
             name: importPort.name,
+            processor: importPort._processor,
           }
         }),
         exports: hostChild.exports.map(exportPort => {
           return {
             id: exportPort._portId,
             name: exportPort.name,
+            params: exportPort._params,
             processor: exportPort._processor,
           }
         })
@@ -495,4 +516,20 @@ function setSize(width, height) {
   wrapEl.style.width = `${width}px`;
   wrapEl.style.height = `${height}px`;
   wrapEl.style.position = `relative`;
+}
+
+function getAudioBufferByFileURI(url, cb) {
+  let audioContext = new AudioContext();
+  let client = new XMLHttpRequest();
+  client.responseType = 'arraybuffer';
+  client.onreadystatechange = () => {
+    if (client.status == 200 && client.readyState == 4) {
+      audioContext.decodeAudioData(client.response)
+        .then(audioBuffer => {
+          cb(audioBuffer);
+        })
+    }
+  }
+  client.open('GET', url, true);
+  client.send(null);
 }
