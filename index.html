@@ -26,14 +26,14 @@
 <body>
   <div id="wrap"></div>
   <div id="info"></div>
-  <!-- <button id="play">Play</button> -->
+  <button id="export">export</button>
   <script src="airglass.js"></script>
+  <script src="funcs.js"></script>
   <script src="sketch.js"></script>
   <script>
-
-    // document.querySelector('#play').addEventListener('click', function(){
-    //   play();
-    // })
+    document.querySelector('#export').addEventListener('click', ()=>{
+      console.log(JSON.stringify(exportData(), null, 2))
+    });
   </script>
 </body>
 

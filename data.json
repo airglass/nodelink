@@ -6,57 +6,41 @@
       "id": "file",
       "x": 32,
       "y": 44,
-      "hue": 60,
-      "width": 155,
-      "height": 184,
+      "hue": 180,
       "name": "音频文件",
       "imports": [],
+      "buttons": [],
       "exports": [
         {
           "id": 0,
-          "name": "01.mp3",
           "params": {},
-          "processor": "getFileUri"
+          "processor": "uri"
         },
         {
           "id": 1,
-          "name": "02.mp3",
           "params": {},
-          "processor": "getFileUri"
+          "processor": "uri"
         },
         {
           "id": 2,
-          "name": "03.mp3",
           "params": {},
-          "processor": "getFileUri"
+          "processor": "uri"
         }
       ]
     },
     {
       "id": "audiocontext",
-      "x": 230,
-      "y": 430,
-      "hue": 60,
-      "name": "创建音频上下文",
+      "x": 232,
+      "y": 582,
+      "hue": 180,
+      "name": "音频上下文",
       "imports": [],
+      "buttons": [],
       "exports": [
         {
           "id": 0,
-          "name": "AudioContext",
           "params": {},
-          "processor": "audioContextCreator"
-        },
-        {
-          "id": 1,
-          "name": "AudioContext",
-          "params": {},
-          "processor": "audioContextCreator"
-        },
-        {
-          "id": 2,
-          "name": "AudioContext",
-          "params": {},
-          "processor": "audioContextCreator"
+          "processor": "audioContext"
         }
       ]
     },
@@ -64,9 +48,8 @@
       "id": "loadfile",
       "x": 304,
       "y": 38,
-      "hue": 30,
-      "height": 308,
-      "name": "文件转类型化数组",
+      "hue": 180,
+      "name": "二进制",
       "imports": [
         {
           "name": "uri"
@@ -78,39 +61,37 @@
           "name": "uri"
         }
       ],
+      "buttons": [],
       "exports": [
         {
           "id": 0,
-          "name": "ArrayBuffer",
           "params": {
             "uri": 0
           },
-          "processor": "File2ArrayBuffer"
+          "processor": "buffer"
         },
         {
           "id": 1,
-          "name": "ArrayBuffer",
           "params": {
             "uri": 1
           },
-          "processor": "File2ArrayBuffer"
+          "processor": "buffer"
         },
         {
           "id": 2,
-          "name": "ArrayBuffer",
           "params": {
             "uri": 2
           },
-          "processor": "File2ArrayBuffer"
+          "processor": "buffer"
         }
       ]
     },
     {
-      "id": "source-01",
+      "id": "source",
       "x": 660,
       "y": 36,
       "hue": 180,
-      "name": "音频源生成器",
+      "name": "音频源",
       "imports": [
         {
           "name": "audioContext"
@@ -125,110 +106,236 @@
           "name": "buffer"
         }
       ],
+      "buttons": [],
       "exports": [
         {
           "id": 0,
-          "name": "Source",
           "params": {
             "audioContext": 0,
             "audioBuffer": 1
           },
-          "processor": "audioSourceCreator"
+          "processor": "source"
         },
         {
           "id": 1,
-          "name": "Source",
           "params": {
             "audioContext": 0,
             "audioBuffer": 2
           },
-          "processor": "audioSourceCreator"
+          "processor": "source"
         },
         {
           "id": 2,
-          "name": "Source",
           "params": {
             "audioContext": 0,
             "audioBuffer": 3
           },
-          "processor": "audioSourceCreator"
+          "processor": "source"
         }
       ]
+    },
+    {
+      "id": "analyze",
+      "x": 82,
+      "y": 766,
+      "hue": 180,
+      "name": "分析",
+      "imports": [
+        {
+          "name": "analyser"
+        }
+      ],
+      "buttons": [
+        {
+          "exec": "analyze",
+          "params": {
+            "analyser": 0
+          }
+        }
+      ],
+      "exports": []
     },
     {
       "id": "analyser",
-      "x": 908,
-      "y": 704,
-      "hue": 320,
-      "width": 200,
-      "height": 156,
-      "name": "波谱生成器",
+      "x": 46,
+      "y": 326,
+      "hue": 180,
+      "name": "波谱",
       "imports": [
         {
-          "name": "audioContext"
+          "name": "source"
         }
       ],
+      "buttons": [],
       "exports": [
         {
           "id": 1,
-          "name": "Source",
-          "params": {},
-          "processor": "analyserCreator"
+          "params": {
+            "source": 0
+          },
+          "processor": "analyser"
+        },
+        {
+          "id": 1,
+          "params": {
+            "source": 0
+          },
+          "processor": "source"
         }
       ]
     },
     {
-      "id": "speaker",
-      "x": 1174,
-      "y": 112,
-      "hue": 170,
-      "width": 134,
-      "height": 184,
-      "name": "扬声器",
+      "id": "keyBoard",
+      "x": 1146,
+      "y": 32,
+      "hue": 180,
+      "name": "键盘",
       "imports": [
         {
-          "name": "source",
-          "exec": "speaker"
+          "sourceNodeId": "oscillator",
+          "sourcePortId": "c4",
+          "name": "source"
         },
         {
-          "name": "source",
-          "exec": "speaker"
+          "sourceNodeId": "oscillator",
+          "sourcePortId": "d4",
+          "name": "source"
         },
         {
-          "name": "source",
-          "exec": "speaker"
+          "sourceNodeId": "oscillator",
+          "sourcePortId": "e4",
+          "name": "source"
+        },
+        {
+          "sourceNodeId": "oscillator",
+          "sourcePortId": "f4",
+          "name": "source"
+        },
+        {
+          "sourceNodeId": "oscillator",
+          "sourcePortId": "g4",
+          "name": "source"
+        },
+        {
+          "sourceNodeId": "oscillator",
+          "sourcePortId": "a4",
+          "name": "source"
+        },
+        {
+          "sourceNodeId": "oscillator",
+          "sourcePortId": "b4",
+          "name": "source"
+        }
+      ],
+      "buttons": [
+        {
+          "exec": "speaker",
+          "params": {
+            "source": 0
+          }
+        },
+        {
+          "exec": "speaker",
+          "params": {
+            "source": 1
+          }
+        },
+        {
+          "exec": "speaker",
+          "params": {
+            "source": 2
+          }
+        },
+        {
+          "exec": "speaker",
+          "params": {
+            "source": 3
+          }
+        },
+        {
+          "exec": "speaker",
+          "params": {
+            "source": 4
+          }
+        },
+        {
+          "exec": "speaker",
+          "params": {
+            "source": 5
+          }
+        },
+        {
+          "exec": "speaker",
+          "params": {
+            "source": 6
+          }
         }
       ],
       "exports": []
     },
     {
       "id": "oscillator",
-      "x": 700,
-      "y": 512,
-      "width": 200,
-      "hue": 170,
-      "name": "振荡生成器",
+      "x": 698,
+      "y": 412,
+      "hue": 180,
+      "name": "Creator",
       "imports": [
         {
+          "sourceNodeId": "audiocontext",
+          "sourcePortId": 0,
           "name": "audioContext"
         }
       ],
+      "buttons": [],
       "exports": [
         {
-          "id": 0,
-          "name": "oscillator",
+          "id": "c4",
           "params": {
             "audioContext": 0
           },
-          "processor": "oscillatorCreator"
+          "processor": "OscillatorNode"
         },
         {
-          "id": 0,
-          "name": "oscillator",
+          "id": "d4",
           "params": {
             "audioContext": 0
           },
-          "processor": "oscillatorCreator"
+          "processor": "OscillatorNode"
+        },
+        {
+          "id": "e4",
+          "params": {
+            "audioContext": 0
+          },
+          "processor": "OscillatorNode"
+        },
+        {
+          "id": "f4",
+          "params": {
+            "audioContext": 0
+          },
+          "processor": "OscillatorNode"
+        },
+        {
+          "id": "g4",
+          "params": {
+            "audioContext": 0
+          },
+          "processor": "OscillatorNode"
+        },
+        {
+          "id": "a4",
+          "params": {
+            "audioContext": 0
+          },
+          "processor": "OscillatorNode"
+        },
+        {
+          "id": "b4",
+          "params": {
+            "audioContext": 0
+          },
+          "processor": "OscillatorNode"
         }
       ]
     }

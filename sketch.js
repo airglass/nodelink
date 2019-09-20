@@ -8,82 +8,6 @@ let activeTargetPort;
 let renderers = {};
 let canvasWidth;
 let canvasHeight;
-let audioContext = new AudioContext();
-let processors = {
-  getFileUri: function (type, targetPort) {
-    if (type == 'connect') {
-      targetPort._data = this.name;
-      createLineBySourcePort(this);
-    }
-    if (type == 'disconnect') {
-      deleteLineByTargetPorts(targetPort);
-    }
-  },
-  File2ArrayBuffer: function (type, targetPort) {
-    if (type == 'connect') {
-      let uri = this._node.imports[this._params.uri]._data;
-      if (!uri) throw new Error('request uri');
-      getAudioBufferByFileURI(uri, audioBuffer => {
-        targetPort._data = audioBuffer;
-        createLineBySourcePort(this);
-      })
-    }
-    if (type == 'disconnect') {
-      targetPort._data = null;
-      deleteLineByTargetPorts(targetPort);
-    }
-  },
-  audioContextCreator: function (type, targetPort) {
-    if (type == 'connect') {
-      let audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      targetPort._data = audioContext;
-      createLineBySourcePort(this);
-    }
-    if (type == 'disconnect') {
-      targetPort._data = null;
-      deleteLineByTargetPorts(targetPort);
-    }
-  },
-  audioSourceCreator: function (type, targetPort) {
-    if (type == 'connect') {
-      let audioContext = this._node.imports[this._params.audioContext]._data;
-      if (!audioContext) throw new Error('request audio context');
-      let audioBuffer = this._node.imports[this._params.audioBuffer]._data;
-      if (!audioBuffer) throw new Error('request audio buffer');
-      let source = audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      targetPort._data = source;
-      createLineBySourcePort(this);
-    }
-    if (type == 'disconnect') {
-      deleteLineByTargetPorts(targetPort);
-    }
-  },
-  analyserCreator: function (type) {
-    if (type == 'connect') {
-
-    }
-    if (type == 'disconnect') {
-
-    }
-  }
-}
-let execs = {
-  speaker: function (type) {
-    let source = this._data;
-    if (!source) throw new Error('request audio source');
-    if (type == 'connect') {
-      source.connect(source.context.destination);
-      if (!source._isStart) {
-        source.start(0, 0);
-        source._isStart = true;
-      }
-    }
-    if (type == 'disconnect') {
-      source.disconnect();
-    }
-  },
-};
 
 renderers.node = new airglass.Renderer(
   wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
@@ -98,6 +22,14 @@ renderers.tempLink = new airglass.Renderer(
   new airglass.Scene,
 )
 renderers.port = new airglass.Renderer(
+  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
+  new airglass.Scene,
+)
+renderers.exec = new airglass.Renderer(
+  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
+  new airglass.Scene,
+)
+renderers.analyser = new airglass.Renderer(
   wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
   new airglass.Scene,
 )
@@ -131,8 +63,11 @@ loadData('data.json')
       let hue = host.hue == 0 ? host.hue : host.hue || 60;
 
       let _module = new airglass.Node({
-        _nodeId: host.id,
+        _id: host.id,
+        _name: host.name,
         _hue: hue,
+        _width: host.width,
+        _height: host.height,
         x: host.x,
         y: host.y,
         r: 3,
@@ -142,7 +77,7 @@ loadData('data.json')
         nameFill: `hsl(${hue}, 100%, 50%)`,
         nameFontSize: nameFontSize,
         nameBarHeight: nameBarHeight,
-        name: host.name || host.id,
+        name: `${host.name} [${host.id}]`,
       });
 
       let moduleInitialHeight = nameBarHeight + hostTBPadding * 2;
@@ -154,13 +89,14 @@ loadData('data.json')
       }
 
       let importPortsTotalHeight = host.imports.length * (portSize + portMargin * 2);
-      let exportPortsToTalHeight = host.exports.length * (portSize + portMargin * 2);
+      let exportPortsToTalHeight = host.exports && host.exports.length * (portSize + portMargin * 2) || 0;
+      let buttonsTotalHeight = host.buttons && host.buttons.length * (portSize + portMargin * 2) || 0;
 
       _module.imports = host.imports &&
         host.imports.length &&
         host.imports.map((portData, i) => {
           let x = _module.x;
-          let y = _module.y + nameBarHeight + hostTBPadding + exportPortsToTalHeight + portMargin * 2 + i * (portSize + portMargin * 2);
+          let y = _module.y + nameBarHeight + hostTBPadding + (exportPortsToTalHeight || buttonsTotalHeight) + portMargin * 2 + i * (portSize + portMargin * 2);
           if (exportPortsToTalHeight) {
             y += portMargin;
           }
@@ -169,11 +105,9 @@ loadData('data.json')
             _sourceNodeId: portData.sourceNodeId,
             _sourcePortId: portData.sourcePortId,
             _node: _module,
-            _exec: portData.exec,
             x: x,
             y: y,
-            width: portSize,
-            height: portSize,
+            size: portSize,
             nameFontSize: nameFontSize,
             dir: 'LTR',
             name: portData.name,
@@ -202,9 +136,8 @@ loadData('data.json')
             _params: portData.params || {},
             x: x,
             y: y,
-            width: portSize,
-            height: portSize,
-            name: portData.name,
+            size: portSize,
+            name: `${portData.processor} [${portData.id}]`,
             margin: itemMargin,
             nameFontSize: nameFontSize,
             dir: 'RTL',
@@ -217,12 +150,38 @@ loadData('data.json')
           return ellipse;
         }) || [];
 
+      _module.buttons = host.buttons &&
+        host.buttons.length &&
+        host.buttons.map((buttonData, i) => {
+          let x = _module.x + _module.width + portSize / 2;
+          let y = _module.y + nameBarHeight + hostTBPadding + portMargin * 2 + i * (portSize + portMargin * 2);
+          let ellipse = new airglass.Item({
+            _type: 'button',
+            _node: _module,
+            _exec: buttonData.exec,
+            _params: buttonData.params || {},
+            x: x,
+            y: y,
+            style: 'rect',
+            size: portSize,
+            name: buttonData.exec,
+            margin: 10 * devicePixelRatio,
+            nameFontSize: nameFontSize,
+            dir: 'RTL',
+            fill: `hsl(${hue}, 100%, 50%)`,
+            stroke: `hsl(${hue}, 100%, 50%)`,
+          });
+          ellipse.updatePath();
+          renderers.port.scene.add(ellipse);
+          sourcePorts.push(ellipse)
+          return ellipse;
+        }) || [];
 
       if (host.height) {
         _module.height = host.height;
       } else {
-        _module.height = moduleInitialHeight + importPortsTotalHeight + exportPortsToTalHeight;
-        if (importPortsTotalHeight && exportPortsToTalHeight) {
+        _module.height = moduleInitialHeight + importPortsTotalHeight + (exportPortsToTalHeight + buttonsTotalHeight);
+        if (importPortsTotalHeight && (exportPortsToTalHeight || buttonsTotalHeight)) {
           _module.height += portMargin;
         }
       }
@@ -259,14 +218,14 @@ function rendererSubscribe(actor) {
         let port = ports[ports.length - 1];
         if (port._type == 'source') {
           activeSourcePort = port;
-          console.log(`[processor] ${port._processor}`);
-          console.log(`[params] ${JSON.stringify(port._params)}\n-----`);
           break touchstart;
         }
         if (port._type == 'target') {
           activeTargetPort = port;
-          console.log(`[exec] ${port._exec}\n-----`);
           break touchstart;
+        }
+        if (port._type == 'button') {
+          tryExecButton('touchstart', port);
         }
       }
 
@@ -320,6 +279,13 @@ function rendererSubscribe(actor) {
           })
           port.updatePath();
         })
+        activeNode.buttons.forEach(port => {
+          port.set({
+            x: port.x + event.x - lastEventPosition[0],
+            y: port.y + event.y - lastEventPosition[1],
+          })
+          port.updatePath();
+        })
         renderers.port.render();
         renderers.link.scene.children.forEach(link => {
           link.updatePath();
@@ -345,10 +311,9 @@ function rendererSubscribe(actor) {
             processing('disconnect', port);
           }
         }
-      }
-
-      if (activeNode || activeSourcePort || activeTargetPort) {
-        exportData();
+        if (port._type == 'button') {
+          tryExecButton('touchend', port);
+        }
       }
 
       activeNode = null;
@@ -358,6 +323,20 @@ function rendererSubscribe(actor) {
   }
 
   lastEventPosition = [event.x, event.y];
+}
+
+function tryExecButton(type, button) {
+  let execName = button._exec;
+  let nodeId = button._node._id;
+  try {
+    funcs[nodeId] &&
+      funcs[nodeId].execs &&
+      funcs[nodeId].execs[execName] &&
+      funcs[nodeId].execs[execName][type] &&
+      funcs[nodeId].execs[execName][type].call(button);
+  } catch (e) {
+    console.log(`🔴${e.message}`);
+  }
 }
 
 function processing(type, TP, SP) {
@@ -375,13 +354,14 @@ function processing(type, TP, SP) {
     sourcePort = targetPort._sourcePort;
   }
   sourcePortProcessorName = sourcePort._processor;
-
+  sourceNameId = sourcePort._node._id;
   try {
-    sourcePortProcessorName &&
-      processors[sourcePortProcessorName] &&
-      processors[sourcePortProcessorName].call(sourcePort, type, targetPort);
+    funcs[sourceNameId] &&
+      funcs[sourceNameId].processors &&
+      funcs[sourceNameId].processors[sourcePortProcessorName] &&
+      funcs[sourceNameId].processors[sourcePortProcessorName].call(sourcePort, type, targetPort);
   } catch (e) {
-    console.log(e);
+    console.log(`🔴${e.message}`);
     // 连接发生错误
     if (type == 'connect') {
       sourcePort._targetPort = null;
@@ -396,17 +376,6 @@ function processing(type, TP, SP) {
   }
 }
 
-function showTip(type, message) {
-  switch (type) {
-    case 'error':
-      console.error(message);
-      break;
-    case 'info':
-      console.info(message);
-      break;
-  }
-}
-
 function createLineBySourcePort(sourcePort) {
   let port = sourcePort._targetPort;
   let link = new airglass.BezierLine(
@@ -418,7 +387,6 @@ function createLineBySourcePort(sourcePort) {
   link.lineWidth = 3;
   renderers.link.scene.add(link);
   renderers.link.render();
-  tryExecTargetPort('connect', port);
 }
 
 // 清除port循环引用关系
@@ -435,7 +403,6 @@ function deleteLineByTargetPorts() {
         targetPort._sourceNodeId = undefined;
         targetPort._sourcePortId = undefined;
         renderers.link.scene.children.splice(linkIndex, 1);
-        tryExecTargetPort('disconnect', targetPort);
       }
     })
     renderers.link.render();
@@ -448,25 +415,29 @@ function exportData() {
     height: canvasHeight,
     hosts: renderers.node.scene.children.map(hostChild => {
       return {
-        id: hostChild._nodeId,
+        id: hostChild._id,
         x: hostChild.x,
         y: hostChild.y,
         hue: hostChild._hue,
-        width: hostChild.width,
-        height: hostChild.height,
-        name: hostChild.name,
+        width: hostChild._width,
+        height: hostChild._height,
+        name: hostChild._name,
         imports: hostChild.imports.map(importPort => {
           return {
             sourceNodeId: importPort._sourceNodeId,
             sourcePortId: importPort._sourcePortId,
             name: importPort.name,
-            exec: importPort._exec,
+          }
+        }),
+        buttons: hostChild.buttons.map(button => {
+          return {
+            exec: button._exec,
+            params: button._params
           }
         }),
         exports: hostChild.exports.map(exportPort => {
           return {
             id: exportPort._portId,
-            name: exportPort.name,
             params: exportPort._params,
             processor: exportPort._processor,
           }
@@ -474,7 +445,6 @@ function exportData() {
       }
     })
   };
-  // console.log(JSON.stringify(data))
   return data;
 }
 
@@ -490,12 +460,6 @@ function loadData(url) {
     client.open('GET', url, true);
     client.send(null);
   })
-}
-
-function tryExecTargetPort(type, targetPort) {
-  targetPort._exec &&
-    execs[targetPort._exec] &&
-    execs[targetPort._exec].call(targetPort, type);
 }
 
 function setSize(width, height) {
