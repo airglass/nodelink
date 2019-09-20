@@ -29,24 +29,35 @@ let processors = {
       })
     }
     if (type == 'disconnect') {
-
+      targetPort._data = null;
+      deleteLineByTargetPorts(targetPort);
+    }
+  },
+  audioContextCreator: function (type, targetPort) {
+    if (type == 'connect') {
+      let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      targetPort._data = audioContext;
+      createLineBySourcePort(this);
+    }
+    if (type == 'disconnect') {
+      targetPort._data = null;
+      deleteLineByTargetPorts(targetPort);
     }
   },
   audioSourceCreator: function (type, targetPort) {
     if (type == 'connect') {
-      let buffer = this._node.imports[this._params.buffer]._data;
-      if (!buffer) throw new Error('request audio buffer');
+      let audioContext = this._node.imports[this._params.audioContext]._data;
+      if (!audioContext) throw new Error('request audio context');
+      let audioBuffer = this._node.imports[this._params.audioBuffer]._data;
+      if (!audioBuffer) throw new Error('request audio buffer');
       let source = audioContext.createBufferSource();
-      source.buffer = buffer;
+      source.buffer = audioBuffer;
       targetPort._data = source;
       createLineBySourcePort(this);
     }
     if (type == 'disconnect') {
       deleteLineByTargetPorts(targetPort);
     }
-    targetPort._exec &&
-      execs[targetPort._exec] &&
-      execs[targetPort._exec].call(targetPort, type);
   },
   analyserCreator: function (type) {
     if (type == 'connect') {
@@ -62,12 +73,11 @@ let execs = {
     let source = this._data;
     if (!source) throw new Error('request audio source');
     if (type == 'connect') {
-      source.connect(audioContext.destination);
-      if(!source._isStart){
+      source.connect(source.context.destination);
+      if (!source._isStart) {
         source.start(0, 0);
         source._isStart = true;
       }
-      console.log(source)
     }
     if (type == 'disconnect') {
       source.disconnect();
@@ -103,8 +113,8 @@ loadData('data.json')
     canvasHeight = data.height || 300;
     setSize(canvasWidth, canvasHeight);
 
-    let importPorts = [];
-    let exportPorts = [];
+    let targetPorts = [];
+    let sourcePorts = [];
 
     let hosts = data.hosts;
 
@@ -174,7 +184,7 @@ loadData('data.json')
           });
           ellipse.updatePath();
           renderers.port.scene.add(ellipse)
-          importPorts.push(ellipse)
+          targetPorts.push(ellipse)
           return ellipse;
         }) || [];
 
@@ -203,7 +213,7 @@ loadData('data.json')
           });
           ellipse.updatePath();
           renderers.port.scene.add(ellipse);
-          exportPorts.push(ellipse)
+          sourcePorts.push(ellipse)
           return ellipse;
         }) || [];
 
@@ -220,10 +230,10 @@ loadData('data.json')
       renderers.node.scene.add(_module);
     });
 
-    exportPorts.forEach(exportPort => {
-      importPorts.forEach(importPort => {
-        if (importPort._sourceNodeId == exportPort._nodeId && importPort._sourcePortId == exportPort._portId) {
-          processing('connect', importPort, exportPort);
+    sourcePorts.forEach(sourcePort => {
+      targetPorts.forEach(targetPort => {
+        if (targetPort._sourceNodeId == sourcePort._nodeId && targetPort._sourcePortId == sourcePort._portId) {
+          processing('connect', targetPort, sourcePort);
         }
       })
     })
@@ -249,10 +259,13 @@ function rendererSubscribe(actor) {
         let port = ports[ports.length - 1];
         if (port._type == 'source') {
           activeSourcePort = port;
+          console.log(`[processor] ${port._processor}`);
+          console.log(`[params] ${JSON.stringify(port._params)}\n-----`);
           break touchstart;
         }
         if (port._type == 'target') {
           activeTargetPort = port;
+          console.log(`[exec] ${port._exec}\n-----`);
           break touchstart;
         }
       }
@@ -368,7 +381,7 @@ function processing(type, TP, SP) {
       processors[sourcePortProcessorName] &&
       processors[sourcePortProcessorName].call(sourcePort, type, targetPort);
   } catch (e) {
-    showTip('error', e.message);
+    console.log(e);
     // 连接发生错误
     if (type == 'connect') {
       sourcePort._targetPort = null;
@@ -405,6 +418,7 @@ function createLineBySourcePort(sourcePort) {
   link.lineWidth = 3;
   renderers.link.scene.add(link);
   renderers.link.render();
+  tryExecTargetPort('connect', port);
 }
 
 // 清除port循环引用关系
@@ -421,6 +435,7 @@ function deleteLineByTargetPorts() {
         targetPort._sourceNodeId = undefined;
         targetPort._sourcePortId = undefined;
         renderers.link.scene.children.splice(linkIndex, 1);
+        tryExecTargetPort('disconnect', targetPort);
       }
     })
     renderers.link.render();
@@ -475,6 +490,12 @@ function loadData(url) {
     client.open('GET', url, true);
     client.send(null);
   })
+}
+
+function tryExecTargetPort(type, targetPort) {
+  targetPort._exec &&
+    execs[targetPort._exec] &&
+    execs[targetPort._exec].call(targetPort, type);
 }
 
 function setSize(width, height) {

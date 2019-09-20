@@ -3,7 +3,7 @@
   "height": 600,
   "hosts": [
     {
-      "id": "file-01",
+      "id": "file",
       "x": 32,
       "y": 44,
       "hue": 60,
@@ -29,6 +29,34 @@
           "name": "03.mp3",
           "params": {},
           "processor": "getFileUri"
+        }
+      ]
+    },
+    {
+      "id": "audiocontext",
+      "x": 230,
+      "y": 430,
+      "hue": 60,
+      "name": "创建音频上下文",
+      "imports": [],
+      "exports": [
+        {
+          "id": 0,
+          "name": "AudioContext",
+          "params": {},
+          "processor": "audioContextCreator"
+        },
+        {
+          "id": 1,
+          "name": "AudioContext",
+          "params": {},
+          "processor": "audioContextCreator"
+        },
+        {
+          "id": 2,
+          "name": "AudioContext",
+          "params": {},
+          "processor": "audioContextCreator"
         }
       ]
     },
@@ -82,9 +110,11 @@
       "x": 660,
       "y": 36,
       "hue": 180,
-      "height": 308,
       "name": "音频源生成器",
       "imports": [
+        {
+          "name": "audioContext"
+        },
         {
           "name": "buffer"
         },
@@ -100,7 +130,8 @@
           "id": 0,
           "name": "Source",
           "params": {
-            "buffer": 0
+            "audioContext": 0,
+            "audioBuffer": 1
           },
           "processor": "audioSourceCreator"
         },
@@ -108,15 +139,17 @@
           "id": 1,
           "name": "Source",
           "params": {
-            "buffer": 1
+            "audioContext": 0,
+            "audioBuffer": 2
           },
           "processor": "audioSourceCreator"
         },
         {
-          "id": 1,
+          "id": 2,
           "name": "Source",
           "params": {
-            "buffer": 2
+            "audioContext": 0,
+            "audioBuffer": 3
           },
           "processor": "audioSourceCreator"
         }
@@ -145,7 +178,7 @@
       ]
     },
     {
-      "id": 5,
+      "id": "speaker",
       "x": 1174,
       "y": 112,
       "hue": 170,
@@ -167,6 +200,37 @@
         }
       ],
       "exports": []
+    },
+    {
+      "id": "oscillator",
+      "x": 700,
+      "y": 512,
+      "width": 200,
+      "hue": 170,
+      "name": "振荡生成器",
+      "imports": [
+        {
+          "name": "audioContext"
+        }
+      ],
+      "exports": [
+        {
+          "id": 0,
+          "name": "oscillator",
+          "params": {
+            "audioContext": 0
+          },
+          "processor": "oscillatorCreator"
+        },
+        {
+          "id": 0,
+          "name": "oscillator",
+          "params": {
+            "audioContext": 0
+          },
+          "processor": "oscillatorCreator"
+        }
+      ]
     }
   ]
 }
