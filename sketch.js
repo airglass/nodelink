@@ -1,4 +1,4 @@
-let wrapEl = document.querySelector('#wrap');
+let rendererManager = new airglass.RendererManager(document.querySelector('#wrap'));
 let lastEventPosition;
 let touchstartPosition;
 let activeNode;
@@ -6,57 +6,40 @@ let activeSourcePort;
 let activeTempLink;
 let activeTargetPort;
 let renderers = {};
-let canvasWidth;
-let canvasHeight;
 
-renderers.node = new airglass.Renderer(
-  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
-  new airglass.Scene,
-)
-renderers.link = new airglass.Renderer(
-  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
-  new airglass.Scene,
-)
-renderers.tempLink = new airglass.Renderer(
-  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
-  new airglass.Scene,
-)
-renderers.port = new airglass.Renderer(
-  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
-  new airglass.Scene,
-)
-renderers.exec = new airglass.Renderer(
-  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
-  new airglass.Scene,
-)
-renderers.analyser = new airglass.Renderer(
-  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
-  new airglass.Scene,
-)
-renderers.controller = new airglass.Renderer(
-  wrapEl.appendChild(document.createElement('canvas')).getContext('2d'),
-  new airglass.Scene,
-).setInteractable();
-
+renderers.node = rendererManager.generate();
+renderers.link = rendererManager.generate();
+renderers.linkLight = rendererManager.generate();
+renderers.tempLink = rendererManager.generate();
+renderers.port = rendererManager.generate();
+renderers.exec = rendererManager.generate();
+renderers.analyser = rendererManager.generate();
+renderers.controller = rendererManager.generate().setInteractable();
 
 loadData('data.json')
   .then(data => {
-    canvasWidth = data.width || 600;
-    canvasHeight = data.height || 300;
-    setSize(canvasWidth, canvasHeight);
+    let width = data.width || 800;
+    let height = data.height || 400;
+    rendererManager.setSize(width, height);
 
     let targetPorts = [];
     let sourcePorts = [];
 
     let hosts = data.hosts;
 
-    let hostTBPadding = 10;
-    let hostLRPadding = 0;
-    let portMargin = 5 * devicePixelRatio;
-    let portSize = 18;
-    let nameFontSize = 13 * devicePixelRatio;
-    let nameBarHeight = 50;
-    let itemMargin = 10 * devicePixelRatio;
+    // 标题栏内边距
+    let namePadding = 6 * devicePixelRatio;
+
+    let portSize = 8 * devicePixelRatio;
+    let portMargin = portSize * .8;
+    let hostTBPadding = portMargin;
+    let hostLRPadding = namePadding;
+
+    // 标题高度
+    let nameFontSize = 12 * devicePixelRatio;
+    let nameBarHeight = nameFontSize + namePadding * 2;
+    let itemMargin = portSize;
+    let portOffsetY = portSize / 2 + portMargin;
 
     hosts.forEach((host, i) => {
       if (!host.id || !host.x || !host.y) return;
@@ -68,6 +51,7 @@ loadData('data.json')
         _hue: hue,
         _width: host.width,
         _height: host.height,
+        _type: host.type,
         x: host.x,
         y: host.y,
         r: 3,
@@ -77,40 +61,38 @@ loadData('data.json')
         nameFill: `hsl(${hue}, 100%, 50%)`,
         nameFontSize: nameFontSize,
         nameBarHeight: nameBarHeight,
-        name: `${host.name} [${host.id}]`,
+        name: host.name,
       });
 
-      let moduleInitialHeight = nameBarHeight + hostTBPadding * 2;
+      let moduleInitialHeight = nameBarHeight + hostTBPadding;
 
       if (host.width) {
         _module.width = host.width;
       } else {
-        _module.width = _module.getTextWidth(renderers.port.ctx) + hostLRPadding * 2 + portSize * 2;
+        _module.width = _module.getTextWidth(renderers.port.ctx) + hostLRPadding * 2;
       }
 
-      let importPortsTotalHeight = host.imports.length * (portSize + portMargin * 2);
-      let exportPortsToTalHeight = host.exports && host.exports.length * (portSize + portMargin * 2) || 0;
-      let buttonsTotalHeight = host.buttons && host.buttons.length * (portSize + portMargin * 2) || 0;
+      let singlePortPlaceholderHeight = portSize + portMargin * 2;
+      let importPortsTotalHeight = host.imports.length * singlePortPlaceholderHeight;
+      let exportPortsToTalHeight = host.exports.length * singlePortPlaceholderHeight;
 
       _module.imports = host.imports &&
         host.imports.length &&
         host.imports.map((portData, i) => {
           let x = _module.x;
-          let y = _module.y + nameBarHeight + hostTBPadding + (exportPortsToTalHeight || buttonsTotalHeight) + portMargin * 2 + i * (portSize + portMargin * 2);
-          if (exportPortsToTalHeight) {
-            y += portMargin;
-          }
+          let y = _module.y + moduleInitialHeight + i * singlePortPlaceholderHeight;
           let ellipse = new airglass.Item({
             _type: 'target',
             _sourceNodeId: portData.sourceNodeId,
             _sourcePortId: portData.sourcePortId,
             _node: _module,
+            _name: portData.name,
             x: x,
-            y: y,
+            y: y + portOffsetY,
             size: portSize,
             nameFontSize: nameFontSize,
             dir: 'LTR',
-            name: portData.name,
+            name: portData.name || '无名',
             margin: itemMargin,
             lineWidth: 1,
             fill: `hsl(${hue}, 100%, 50%)`,
@@ -126,46 +108,20 @@ loadData('data.json')
         host.exports.length &&
         host.exports.map((portData, i) => {
           let x = _module.x + _module.width;
-          let y = _module.y + nameBarHeight + hostTBPadding + portMargin * 2 + i * (portSize + portMargin * 2);
+          let y = _module.y + moduleInitialHeight + i * singlePortPlaceholderHeight;
           let ellipse = new airglass.Item({
             _type: 'source',
             _nodeId: host.id,
             _portId: portData.id,
             _node: _module,
             _processor: portData.processor,
+            _name: portData.name,
             _params: portData.params || {},
             x: x,
-            y: y,
+            y: y + portOffsetY,
             size: portSize,
-            name: `${portData.processor} [${portData.id}]`,
+            name: portData.name || '无名',
             margin: itemMargin,
-            nameFontSize: nameFontSize,
-            dir: 'RTL',
-            fill: `hsl(${hue}, 100%, 50%)`,
-            stroke: `hsl(${hue}, 100%, 50%)`,
-          });
-          ellipse.updatePath();
-          renderers.port.scene.add(ellipse);
-          sourcePorts.push(ellipse)
-          return ellipse;
-        }) || [];
-
-      _module.buttons = host.buttons &&
-        host.buttons.length &&
-        host.buttons.map((buttonData, i) => {
-          let x = _module.x + _module.width + portSize / 2;
-          let y = _module.y + nameBarHeight + hostTBPadding + portMargin * 2 + i * (portSize + portMargin * 2);
-          let ellipse = new airglass.Item({
-            _type: 'button',
-            _node: _module,
-            _exec: buttonData.exec,
-            _params: buttonData.params || {},
-            x: x,
-            y: y,
-            style: 'rect',
-            size: portSize,
-            name: buttonData.exec,
-            margin: 10 * devicePixelRatio,
             nameFontSize: nameFontSize,
             dir: 'RTL',
             fill: `hsl(${hue}, 100%, 50%)`,
@@ -180,10 +136,7 @@ loadData('data.json')
       if (host.height) {
         _module.height = host.height;
       } else {
-        _module.height = moduleInitialHeight + importPortsTotalHeight + (exportPortsToTalHeight + buttonsTotalHeight);
-        if (importPortsTotalHeight && (exportPortsToTalHeight || buttonsTotalHeight)) {
-          _module.height += portMargin;
-        }
+        _module.height = moduleInitialHeight + airglass.max([importPortsTotalHeight, exportPortsToTalHeight]) + hostTBPadding;
       }
       _module.updatePath();
       renderers.node.scene.add(_module);
@@ -200,11 +153,50 @@ loadData('data.json')
     renderers.node.render();
     renderers.port.render();
     renderers.link.render();
+
+    let keyboardNode = getNodeById('keyboard-01');
+    let keyToOsc = {};
+    keyboardNode.imports.forEach(targetPort => {
+      let oscillator = targetPort._data;
+      keyToOsc[targetPort._name] = oscillator;
+    })
+    let keyToKey = {
+      a: 'C4',
+      s: 'D4',
+      d: 'E4',
+      f: 'F4',
+      g: 'G4',
+      h: 'A4',
+      j: 'B4',
+    };
+    document.addEventListener('keypress', function (e) {
+      let soundKey = keyToKey[e.key];
+      if (soundKey) {
+        let oscillator = keyToOsc[soundKey];
+        if (!oscillator._isConnected) {
+          oscillator.connect(oscillator.context.destination);
+          oscillator._isConnected = true;
+        }
+        if (!oscillator._isStart) {
+          oscillator.start(0, 0);
+          oscillator._isStart = true;
+        }
+      }
+    })
+    document.addEventListener('keyup', function (e) {
+      let soundKey = keyToKey[e.key];
+      if (soundKey) {
+        let oscillator = keyToOsc[soundKey];
+        if (oscillator._isConnected) {
+          oscillator.disconnect();
+          oscillator._isConnected = false;
+        }
+      }
+    })
+
   })
 
-renderers.controller.subscribe(renderers.controller, rendererSubscribe)
-
-function rendererSubscribe(actor) {
+renderers.controller.subscribe(renderers.controller, function rendererSubscribe(actor) {
   let event = actor.event;
   // 初始化上次事件位置
   !lastEventPosition && (lastEventPosition = [event.x, event.y]);
@@ -218,23 +210,54 @@ function rendererSubscribe(actor) {
         let port = ports[ports.length - 1];
         if (port._type == 'source') {
           activeSourcePort = port;
+          console.table({
+            '输出ID': activeSourcePort._portId,
+            name: activeSourcePort._name,
+            params: JSON.stringify(activeSourcePort._params),
+            processor: activeSourcePort._processor,
+          })
           break touchstart;
         }
         if (port._type == 'target') {
           activeTargetPort = port;
+          console.table({
+            name: activeTargetPort._name,
+            '有无数据': !!activeTargetPort._data,
+            sourceNodeId: activeTargetPort._sourceNodeId,
+            sourcePortId: activeTargetPort._sourcePortId,
+          })
           break touchstart;
-        }
-        if (port._type == 'button') {
-          tryExecButton('touchstart', port);
         }
       }
 
       let nodes = renderers.node.getElementsContainPoint(event);
       if (nodes.length) {
         activeNode = nodes[nodes.length - 1];
+        console.table({
+          '节点ID': activeNode._id,
+          name: activeNode._name,
+          type: activeNode._type,
+        })
         break touchstart;
       }
     }
+  }
+
+  if (event.type == 'mousemove') {
+    renderers.linkLight.scene.children = [];
+    renderers.link.scene.children.forEach(link => {
+      let light = link.updateLight();
+      let _l = new airglass.BezierLine(link.startPoint, link.endPoint);
+      let lg = renderers.linkLight.ctx.createLinearGradient(light.p1.x, light.p1.y, light.p2.x, light.p2.y);
+      lg.addColorStop(0, 'transparent');
+      lg.addColorStop(.4, '#fff');
+      lg.addColorStop(.6, '#fff');
+      lg.addColorStop(1, 'transparent');
+      _l.stroke = lg;
+      _l.updatePath();
+      renderers.linkLight.scene.add(_l);
+    })
+    renderers.linkLight.render();
   }
 
   if (event.type == 'touchmove') {
@@ -245,7 +268,7 @@ function rendererSubscribe(actor) {
 
       if (activeSourcePort) {
         renderers.tempLink.clean();
-        let link = new airglass.BezierLine(
+        let link = new airglass.NodeLine(
           activeSourcePort,
           event
         )
@@ -279,13 +302,6 @@ function rendererSubscribe(actor) {
           })
           port.updatePath();
         })
-        activeNode.buttons.forEach(port => {
-          port.set({
-            x: port.x + event.x - lastEventPosition[0],
-            y: port.y + event.y - lastEventPosition[1],
-          })
-          port.updatePath();
-        })
         renderers.port.render();
         renderers.link.scene.children.forEach(link => {
           link.updatePath();
@@ -311,9 +327,6 @@ function rendererSubscribe(actor) {
             processing('disconnect', port);
           }
         }
-        if (port._type == 'button') {
-          tryExecButton('touchend', port);
-        }
       }
 
       activeNode = null;
@@ -323,21 +336,7 @@ function rendererSubscribe(actor) {
   }
 
   lastEventPosition = [event.x, event.y];
-}
-
-function tryExecButton(type, button) {
-  let execName = button._exec;
-  let nodeId = button._node._id;
-  try {
-    funcs[nodeId] &&
-      funcs[nodeId].execs &&
-      funcs[nodeId].execs[execName] &&
-      funcs[nodeId].execs[execName][type] &&
-      funcs[nodeId].execs[execName][type].call(button);
-  } catch (e) {
-    console.log(`🔴${e.message}`);
-  }
-}
+});
 
 function processing(type, TP, SP) {
   let targetPort = TP;
@@ -345,21 +344,17 @@ function processing(type, TP, SP) {
   let sourcePortProcessorName;
   if (type == 'connect') {
     sourcePort = SP;
-    sourcePort._targetPort = targetPort;
-    targetPort._sourcePort = sourcePort;
-    targetPort._sourceNodeId = sourcePort._nodeId;
-    targetPort._sourcePortId = sourcePort._portId;
   }
   if (type == 'disconnect') {
     sourcePort = targetPort._sourcePort;
   }
+  let nodeType = sourcePort._node._type;
   sourcePortProcessorName = sourcePort._processor;
-  sourceNameId = sourcePort._node._id;
+  console.log(`${nodeType} -> ${sourcePortProcessorName}`);
   try {
-    funcs[sourceNameId] &&
-      funcs[sourceNameId].processors &&
-      funcs[sourceNameId].processors[sourcePortProcessorName] &&
-      funcs[sourceNameId].processors[sourcePortProcessorName].call(sourcePort, type, targetPort);
+    funcs[nodeType] &&
+      funcs[nodeType][sourcePortProcessorName] &&
+      funcs[nodeType][sourcePortProcessorName].call(sourcePort, type, targetPort);
   } catch (e) {
     console.log(`🔴${e.message}`);
     // 连接发生错误
@@ -376,14 +371,17 @@ function processing(type, TP, SP) {
   }
 }
 
-function createLineBySourcePort(sourcePort) {
-  let port = sourcePort._targetPort;
-  let link = new airglass.BezierLine(
+function createLineBySourcePort(sourcePort, targetPort) {
+  sourcePort._targetPort = targetPort;
+  targetPort._sourcePort = sourcePort;
+  targetPort._sourceNodeId = sourcePort._nodeId;
+  targetPort._sourcePortId = sourcePort._portId;
+  let link = new airglass.NodeLine(
     sourcePort,
-    port
+    targetPort
   )
   link.updatePath();
-  link.stroke = `hsl(${sourcePort._node._hue}, 100%, 50%)`;
+  link.stroke = `hsla(${sourcePort._node._hue}, 100%, 50%, .3)`;
   link.lineWidth = 3;
   renderers.link.scene.add(link);
   renderers.link.render();
@@ -411,33 +409,29 @@ function deleteLineByTargetPorts() {
 
 function exportData() {
   let data = {
-    width: canvasWidth,
-    height: canvasHeight,
+    width: rendererManager.canvasWidth,
+    height: rendererManager.canvasHeight,
     hosts: renderers.node.scene.children.map(hostChild => {
       return {
         id: hostChild._id,
+        name: hostChild._name,
+        type: hostChild._type,
         x: hostChild.x,
         y: hostChild.y,
-        hue: hostChild._hue,
         width: hostChild._width,
         height: hostChild._height,
-        name: hostChild._name,
+        hue: hostChild._hue,
         imports: hostChild.imports.map(importPort => {
           return {
             sourceNodeId: importPort._sourceNodeId,
             sourcePortId: importPort._sourcePortId,
-            name: importPort.name,
-          }
-        }),
-        buttons: hostChild.buttons.map(button => {
-          return {
-            exec: button._exec,
-            params: button._params
+            name: importPort._name,
           }
         }),
         exports: hostChild.exports.map(exportPort => {
           return {
             id: exportPort._portId,
+            name: exportPort._name,
             params: exportPort._params,
             processor: exportPort._processor,
           }
@@ -462,31 +456,12 @@ function loadData(url) {
   })
 }
 
-function setSize(width, height) {
-  for (let name in renderers) {
-    let renderer = renderers[name];
-    renderer.ctx.canvas.dataset.name = name;
-    renderer.ctx.canvas.width = width * devicePixelRatio;
-    renderer.ctx.canvas.height = height * devicePixelRatio;
-    renderer.ctx.canvas.style = `position:absolute;top:0;left:0;width:${width}px;height:${height}px;`;
-  }
-  wrapEl.style.width = `${width}px`;
-  wrapEl.style.height = `${height}px`;
-  wrapEl.style.position = `relative`;
-}
-
-function getAudioBufferByFileURI(url, cb) {
-  let audioContext = new AudioContext();
-  let client = new XMLHttpRequest();
-  client.responseType = 'arraybuffer';
-  client.onreadystatechange = () => {
-    if (client.status == 200 && client.readyState == 4) {
-      audioContext.decodeAudioData(client.response)
-        .then(audioBuffer => {
-          cb(audioBuffer);
-        })
+function getNodeById(nodeId) {
+  let node;
+  renderers.node.scene.children.forEach(_node => {
+    if (nodeId == _node._id) {
+      node = _node;
     }
-  }
-  client.open('GET', url, true);
-  client.send(null);
+  })
+  return node;
 }

@@ -1,343 +1,509 @@
 {
   "width": 800,
-  "height": 600,
+  "height": 700,
   "hosts": [
     {
-      "id": "file",
-      "x": 32,
-      "y": 44,
+      "id": "analyser-node-01",
+      "name": "创建分析节点",
+      "type": "analyser-node",
+      "x": 64,
+      "y": 1116,
+      "width": 220,
       "hue": 180,
-      "name": "音频文件",
-      "imports": [],
-      "buttons": [],
+      "imports": [
+        {
+          "name": "音频源"
+        }
+      ],
       "exports": [
         {
-          "id": 0,
-          "params": {},
-          "processor": "uri"
-        },
-        {
           "id": 1,
-          "params": {},
-          "processor": "uri"
-        },
-        {
-          "id": 2,
-          "params": {},
-          "processor": "uri"
+          "name": "分析节点",
+          "params": {
+            "source": 0
+          },
+          "processor": "analyser"
         }
       ]
     },
     {
-      "id": "audiocontext",
-      "x": 232,
-      "y": 582,
-      "hue": 180,
-      "name": "音频上下文",
+      "id": "audiocontext-creator-01",
+      "name": "创建音频上下文",
+      "type": "audiocontext-creator",
+      "x": 54,
+      "y": 394,
+      "hue": 50,
       "imports": [],
-      "buttons": [],
       "exports": [
         {
           "id": 0,
+          "name": "音频上下文",
           "params": {},
           "processor": "audioContext"
         }
       ]
     },
     {
-      "id": "loadfile",
-      "x": 304,
-      "y": 38,
-      "hue": 180,
-      "name": "二进制",
+      "id": "copy-node-01",
+      "name": "创建无限副本",
+      "type": "copy-node",
+      "x": 364,
+      "y": 40,
+      "hue": 30,
       "imports": [
         {
-          "name": "uri"
-        },
-        {
-          "name": "uri"
-        },
-        {
-          "name": "uri"
-        }
-      ],
-      "buttons": [],
-      "exports": [
-        {
-          "id": 0,
-          "params": {
-            "uri": 0
-          },
-          "processor": "buffer"
-        },
-        {
-          "id": 1,
-          "params": {
-            "uri": 1
-          },
-          "processor": "buffer"
-        },
-        {
-          "id": 2,
-          "params": {
-            "uri": 2
-          },
-          "processor": "buffer"
-        }
-      ]
-    },
-    {
-      "id": "source",
-      "x": 660,
-      "y": 36,
-      "hue": 180,
-      "name": "音频源",
-      "imports": [
-        {
-          "name": "audioContext"
-        },
-        {
-          "name": "buffer"
-        },
-        {
-          "name": "buffer"
-        },
-        {
-          "name": "buffer"
-        }
-      ],
-      "buttons": [],
-      "exports": [
-        {
-          "id": 0,
-          "params": {
-            "audioContext": 0,
-            "audioBuffer": 1
-          },
-          "processor": "source"
-        },
-        {
-          "id": 1,
-          "params": {
-            "audioContext": 0,
-            "audioBuffer": 2
-          },
-          "processor": "source"
-        },
-        {
-          "id": 2,
-          "params": {
-            "audioContext": 0,
-            "audioBuffer": 3
-          },
-          "processor": "source"
-        }
-      ]
-    },
-    {
-      "id": "analyze",
-      "x": 82,
-      "y": 766,
-      "hue": 180,
-      "name": "分析",
-      "imports": [
-        {
-          "name": "analyser"
-        }
-      ],
-      "buttons": [
-        {
-          "exec": "analyze",
-          "params": {
-            "analyser": 0
-          }
-        }
-      ],
-      "exports": []
-    },
-    {
-      "id": "analyser",
-      "x": 46,
-      "y": 326,
-      "hue": 180,
-      "name": "波谱",
-      "imports": [
-        {
-          "name": "source"
-        }
-      ],
-      "buttons": [],
-      "exports": [
-        {
-          "id": 1,
-          "params": {
-            "source": 0
-          },
-          "processor": "analyser"
-        },
-        {
-          "id": 1,
-          "params": {
-            "source": 0
-          },
-          "processor": "source"
-        }
-      ]
-    },
-    {
-      "id": "keyBoard",
-      "x": 1146,
-      "y": 32,
-      "hue": 180,
-      "name": "键盘",
-      "imports": [
-        {
-          "sourceNodeId": "oscillator",
-          "sourcePortId": "c4",
-          "name": "source"
-        },
-        {
-          "sourceNodeId": "oscillator",
-          "sourcePortId": "d4",
-          "name": "source"
-        },
-        {
-          "sourceNodeId": "oscillator",
-          "sourcePortId": "e4",
-          "name": "source"
-        },
-        {
-          "sourceNodeId": "oscillator",
-          "sourcePortId": "f4",
-          "name": "source"
-        },
-        {
-          "sourceNodeId": "oscillator",
-          "sourcePortId": "g4",
-          "name": "source"
-        },
-        {
-          "sourceNodeId": "oscillator",
-          "sourcePortId": "a4",
-          "name": "source"
-        },
-        {
-          "sourceNodeId": "oscillator",
-          "sourcePortId": "b4",
-          "name": "source"
-        }
-      ],
-      "buttons": [
-        {
-          "exec": "speaker",
-          "params": {
-            "source": 0
-          }
-        },
-        {
-          "exec": "speaker",
-          "params": {
-            "source": 1
-          }
-        },
-        {
-          "exec": "speaker",
-          "params": {
-            "source": 2
-          }
-        },
-        {
-          "exec": "speaker",
-          "params": {
-            "source": 3
-          }
-        },
-        {
-          "exec": "speaker",
-          "params": {
-            "source": 4
-          }
-        },
-        {
-          "exec": "speaker",
-          "params": {
-            "source": 5
-          }
-        },
-        {
-          "exec": "speaker",
-          "params": {
-            "source": 6
-          }
-        }
-      ],
-      "exports": []
-    },
-    {
-      "id": "oscillator",
-      "x": 698,
-      "y": 412,
-      "hue": 180,
-      "name": "Creator",
-      "imports": [
-        {
-          "sourceNodeId": "audiocontext",
+          "sourceNodeId": "audiocontext-creator-01",
           "sourcePortId": 0,
-          "name": "audioContext"
+          "name": "源数据"
         }
       ],
-      "buttons": [],
       "exports": [
         {
-          "id": "c4",
+          "id": 0,
+          "name": "副本",
           "params": {
-            "audioContext": 0
+            "data": 0
           },
-          "processor": "OscillatorNode"
+          "processor": "copy"
         },
         {
-          "id": "d4",
+          "id": 1,
+          "name": "副本",
           "params": {
-            "audioContext": 0
+            "data": 0
           },
-          "processor": "OscillatorNode"
+          "processor": "copy"
         },
         {
-          "id": "e4",
+          "id": 2,
+          "name": "副本",
           "params": {
-            "audioContext": 0
+            "data": 0
           },
-          "processor": "OscillatorNode"
+          "processor": "copy"
         },
         {
-          "id": "f4",
+          "id": 3,
+          "name": "副本",
           "params": {
-            "audioContext": 0
+            "data": 0
           },
-          "processor": "OscillatorNode"
+          "processor": "copy"
         },
         {
-          "id": "g4",
+          "id": 4,
+          "name": "副本",
           "params": {
-            "audioContext": 0
+            "data": 0
           },
-          "processor": "OscillatorNode"
+          "processor": "copy"
         },
         {
-          "id": "a4",
+          "id": 5,
+          "name": "副本",
           "params": {
-            "audioContext": 0
+            "data": 0
           },
-          "processor": "OscillatorNode"
+          "processor": "copy"
         },
         {
-          "id": "b4",
+          "id": 6,
+          "name": "副本",
           "params": {
-            "audioContext": 0
+            "data": 0
+          },
+          "processor": "copy"
+        }
+      ]
+    },
+    {
+      "id": "float-number-01",
+      "name": "浮点数值",
+      "type": "float-number",
+      "x": 412,
+      "y": 496,
+      "hue": 80,
+      "imports": [],
+      "exports": [
+        {
+          "id": "C4",
+          "name": "261.626",
+          "params": {},
+          "processor": "floatNumber"
+        }
+      ]
+    },
+    {
+      "id": "float-number-02",
+      "name": "浮点数值",
+      "type": "float-number",
+      "x": 414,
+      "y": 610,
+      "hue": 80,
+      "imports": [],
+      "exports": [
+        {
+          "id": "D4",
+          "name": "293.665",
+          "params": {},
+          "processor": "floatNumber"
+        }
+      ]
+    },
+    {
+      "id": "float-number-03",
+      "name": "浮点数值",
+      "type": "float-number",
+      "x": 414,
+      "y": 722,
+      "hue": 80,
+      "imports": [],
+      "exports": [
+        {
+          "id": "E4",
+          "name": "329.628",
+          "params": {},
+          "processor": "floatNumber"
+        }
+      ]
+    },
+    {
+      "id": "float-number-04",
+      "name": "浮点数值",
+      "type": "float-number",
+      "x": 414,
+      "y": 836,
+      "hue": 80,
+      "imports": [],
+      "exports": [
+        {
+          "id": "F4",
+          "name": "349.228",
+          "params": {},
+          "processor": "floatNumber"
+        }
+      ]
+    },
+    {
+      "id": "float-number-05",
+      "name": "浮点数值",
+      "type": "float-number",
+      "x": 414,
+      "y": 950,
+      "hue": 80,
+      "imports": [],
+      "exports": [
+        {
+          "id": "G4",
+          "name": "391.995",
+          "params": {},
+          "processor": "floatNumber"
+        }
+      ]
+    },
+    {
+      "id": "float-number-06",
+      "name": "浮点数值",
+      "type": "float-number",
+      "x": 412,
+      "y": 1064,
+      "hue": 80,
+      "imports": [],
+      "exports": [
+        {
+          "id": "A4",
+          "name": "440",
+          "params": {},
+          "processor": "floatNumber"
+        }
+      ]
+    },
+    {
+      "id": "float-number-07",
+      "name": "浮点数值",
+      "type": "float-number",
+      "x": 412,
+      "y": 1176,
+      "hue": 80,
+      "imports": [],
+      "exports": [
+        {
+          "id": "B4",
+          "name": "493.883",
+          "params": {},
+          "processor": "floatNumber"
+        }
+      ]
+    },
+    {
+      "id": "oscillator-creator-01",
+      "name": "创建振荡器节点",
+      "type": "oscillator-creator",
+      "x": 792,
+      "y": 60,
+      "width": 280,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "copy-node-01",
+          "sourcePortId": 0,
+          "name": "音频上下文"
+        },
+        {
+          "sourceNodeId": "float-number-01",
+          "sourcePortId": "C4",
+          "name": "频率数值"
+        }
+      ],
+      "exports": [
+        {
+          "id": "C4",
+          "name": "振荡音源",
+          "params": {
+            "audioContext": 0,
+            "frequency": 1
           },
           "processor": "OscillatorNode"
         }
       ]
+    },
+    {
+      "id": "oscillator-creator-02",
+      "name": "创建振荡器节点",
+      "type": "oscillator-creator",
+      "x": 792,
+      "y": 210,
+      "width": 280,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "copy-node-01",
+          "sourcePortId": 1,
+          "name": "音频上下文"
+        },
+        {
+          "sourceNodeId": "float-number-02",
+          "sourcePortId": "D4",
+          "name": "频率数值"
+        }
+      ],
+      "exports": [
+        {
+          "id": "D4",
+          "name": "振荡音源",
+          "params": {
+            "audioContext": 0,
+            "frequency": 1
+          },
+          "processor": "OscillatorNode"
+        }
+      ]
+    },
+    {
+      "id": "oscillator-creator-03",
+      "name": "创建振荡器节点",
+      "type": "oscillator-creator",
+      "x": 792,
+      "y": 360,
+      "width": 280,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "copy-node-01",
+          "sourcePortId": 2,
+          "name": "音频上下文"
+        },
+        {
+          "sourceNodeId": "float-number-03",
+          "sourcePortId": "E4",
+          "name": "频率数值"
+        }
+      ],
+      "exports": [
+        {
+          "id": "E4",
+          "name": "振荡音源",
+          "params": {
+            "audioContext": 0,
+            "frequency": 1
+          },
+          "processor": "OscillatorNode"
+        }
+      ]
+    },
+    {
+      "id": "oscillator-creator-04",
+      "name": "创建振荡器节点",
+      "type": "oscillator-creator",
+      "x": 794,
+      "y": 508,
+      "width": 280,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "copy-node-01",
+          "sourcePortId": 3,
+          "name": "音频上下文"
+        },
+        {
+          "sourceNodeId": "float-number-04",
+          "sourcePortId": "F4",
+          "name": "频率数值"
+        }
+      ],
+      "exports": [
+        {
+          "id": "F4",
+          "name": "振荡音源",
+          "params": {
+            "audioContext": 0,
+            "frequency": 1
+          },
+          "processor": "OscillatorNode"
+        }
+      ]
+    },
+    {
+      "id": "oscillator-creator-05",
+      "name": "创建振荡器节点",
+      "type": "oscillator-creator",
+      "x": 794,
+      "y": 658,
+      "width": 280,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "copy-node-01",
+          "sourcePortId": 4,
+          "name": "音频上下文"
+        },
+        {
+          "sourceNodeId": "float-number-05",
+          "sourcePortId": "G4",
+          "name": "频率数值"
+        }
+      ],
+      "exports": [
+        {
+          "id": "G4",
+          "name": "振荡音源",
+          "params": {
+            "audioContext": 0,
+            "frequency": 1
+          },
+          "processor": "OscillatorNode"
+        }
+      ]
+    },
+    {
+      "id": "oscillator-creator-06",
+      "name": "创建振荡器节点",
+      "type": "oscillator-creator",
+      "x": 796,
+      "y": 806,
+      "width": 280,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "copy-node-01",
+          "sourcePortId": 5,
+          "name": "音频上下文"
+        },
+        {
+          "sourceNodeId": "float-number-06",
+          "sourcePortId": "A4",
+          "name": "频率数值"
+        }
+      ],
+      "exports": [
+        {
+          "id": "A4",
+          "name": "振荡音源",
+          "params": {
+            "audioContext": 0,
+            "frequency": 1
+          },
+          "processor": "OscillatorNode"
+        }
+      ]
+    },
+    {
+      "id": "oscillator-creator-07",
+      "name": "创建振荡器节点",
+      "type": "oscillator-creator",
+      "x": 794,
+      "y": 956,
+      "width": 280,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "copy-node-01",
+          "sourcePortId": 6,
+          "name": "音频上下文"
+        },
+        {
+          "sourceNodeId": "float-number-07",
+          "sourcePortId": "B4",
+          "name": "频率数值"
+        }
+      ],
+      "exports": [
+        {
+          "id": "B4",
+          "name": "振荡音源",
+          "params": {
+            "audioContext": 0,
+            "frequency": 1
+          },
+          "processor": "OscillatorNode"
+        }
+      ]
+    },
+    {
+      "id": "keyboard-01",
+      "name": "合成音色键盘",
+      "type": "keyboard",
+      "x": 1314,
+      "y": 438,
+      "hue": 180,
+      "imports": [
+        {
+          "sourceNodeId": "oscillator-creator-01",
+          "sourcePortId": "C4",
+          "name": "C4"
+        },
+        {
+          "sourceNodeId": "oscillator-creator-02",
+          "sourcePortId": "D4",
+          "name": "D4"
+        },
+        {
+          "sourceNodeId": "oscillator-creator-03",
+          "sourcePortId": "E4",
+          "name": "E4"
+        },
+        {
+          "sourceNodeId": "oscillator-creator-04",
+          "sourcePortId": "F4",
+          "name": "F4"
+        },
+        {
+          "sourceNodeId": "oscillator-creator-05",
+          "sourcePortId": "G4",
+          "name": "G4"
+        },
+        {
+          "sourceNodeId": "oscillator-creator-06",
+          "sourcePortId": "A4",
+          "name": "A4"
+        },
+        {
+          "sourceNodeId": "oscillator-creator-07",
+          "sourcePortId": "B4",
+          "name": "B4"
+        }
+      ],
+      "exports": []
     }
   ]
 }
