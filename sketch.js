@@ -1,4 +1,3 @@
-let rendererManager = new airglass.RendererManager(document.querySelector('#wrap'));
 let lastEventPosition;
 let touchstartPosition;
 let activeNode;
@@ -7,20 +6,22 @@ let activeTempLink;
 let activeTargetPort;
 let renderers = {};
 
-renderers.node = rendererManager.generate();
-renderers.link = rendererManager.generate();
-renderers.linkLight = rendererManager.generate();
-renderers.tempLink = rendererManager.generate();
-renderers.port = rendererManager.generate();
-renderers.exec = rendererManager.generate();
-renderers.analyser = rendererManager.generate();
-renderers.controller = rendererManager.generate().setInteractable();
+let ag = new airglass.Airglass(document.querySelector('#wrap')).setInteractable();
+
+renderers.node = ag.addGlass();
+renderers.link = ag.addGlass();
+renderers.linkLight = ag.addGlass();
+renderers.tempLink = ag.addGlass();
+renderers.port = ag.addGlass();
+renderers.exec = ag.addGlass();
+renderers.analyser = ag.addGlass();
+renderers.controller = ag.addGlass();
 
 loadData('data.json')
   .then(data => {
     let width = data.width || 800;
     let height = data.height || 400;
-    rendererManager.setSize(width, height);
+    ag.rendererManager.setSize(width, height);
 
     let targetPorts = [];
     let sourcePorts = [];
@@ -136,7 +137,7 @@ loadData('data.json')
       if (host.height) {
         _module.height = host.height;
       } else {
-        _module.height = moduleInitialHeight + airglass.max([importPortsTotalHeight, exportPortsToTalHeight]) + hostTBPadding;
+        _module.height = moduleInitialHeight + airglass.utils.max([importPortsTotalHeight, exportPortsToTalHeight]) + hostTBPadding;
       }
       _module.updatePath();
       renderers.node.scene.add(_module);
@@ -196,7 +197,7 @@ loadData('data.json')
 
   })
 
-renderers.controller.subscribe(renderers.controller, function rendererSubscribe(actor) {
+ag.subscribe(function rendererSubscribe(actor) {
   let event = actor.event;
   // 初始化上次事件位置
   !lastEventPosition && (lastEventPosition = [event.x, event.y]);
@@ -243,23 +244,6 @@ renderers.controller.subscribe(renderers.controller, function rendererSubscribe(
     }
   }
 
-  if (event.type == 'mousemove') {
-    renderers.linkLight.scene.children = [];
-    renderers.link.scene.children.forEach(link => {
-      let light = link.updateLight();
-      let _l = new airglass.BezierLine(link.startPoint, link.endPoint);
-      let lg = renderers.linkLight.ctx.createLinearGradient(light.p1.x, light.p1.y, light.p2.x, light.p2.y);
-      lg.addColorStop(0, 'transparent');
-      lg.addColorStop(.4, '#fff');
-      lg.addColorStop(.6, '#fff');
-      lg.addColorStop(1, 'transparent');
-      _l.stroke = lg;
-      _l.updatePath();
-      renderers.linkLight.scene.add(_l);
-    })
-    renderers.linkLight.render();
-  }
-
   if (event.type == 'touchmove') {
     touchmove: {
       if (lastEventPosition[0] == event.x && lastEventPosition[1] == event.y) {
@@ -267,7 +251,7 @@ renderers.controller.subscribe(renderers.controller, function rendererSubscribe(
       }
 
       if (activeSourcePort) {
-        renderers.tempLink.clean();
+        renderers.tempLink.clear();
         let link = new airglass.NodeLine(
           activeSourcePort,
           event
@@ -313,7 +297,7 @@ renderers.controller.subscribe(renderers.controller, function rendererSubscribe(
 
   if (event.type == 'touchend') {
     touchend: {
-      renderers.tempLink.clean();
+      renderers.tempLink.clear();
       let ports = renderers.port.getElementsContainPoint(event);
       if (ports.length) {
         let port = ports[ports.length - 1];
@@ -369,6 +353,23 @@ function processing(type, TP, SP) {
 
     }
   }
+}
+
+function updateNodeLinkLight() {
+  renderers.linkLight.scene.children = [];
+  renderers.link.scene.children.forEach(link => {
+    let light = link.updateLight();
+    let _l = new airglass.BezierLine(link.startPoint, link.endPoint);
+    let lg = renderers.linkLight.ctx.createLinearGradient(light.p1.x, light.p1.y, light.p2.x, light.p2.y);
+    lg.addColorStop(0, 'transparent');
+    lg.addColorStop(.4, '#fff');
+    lg.addColorStop(.6, '#fff');
+    lg.addColorStop(1, 'transparent');
+    _l.stroke = lg;
+    _l.updatePath();
+    renderers.linkLight.scene.add(_l);
+  })
+  renderers.linkLight.render();
 }
 
 function createLineBySourcePort(sourcePort, targetPort) {
