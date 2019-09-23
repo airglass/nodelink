@@ -1,3 +1,5 @@
+![Airglass NodeLink Demo](demo.gif)
+
 ## Airglass.js NodeLink Demo 开发笔记
 
 * [Airglass.js开发笔记：处理端口逻辑](https://www.shuaihuajun.com/article/airglass-node-port-processor/)
