@@ -121,7 +121,7 @@
       "name": "浮点数值",
       "type": "float-number",
       "x": 412,
-      "y": 496,
+      "y": 438,
       "hue": 80,
       "imports": [],
       "exports": [
@@ -137,8 +137,8 @@
       "id": "float-number-02",
       "name": "浮点数值",
       "type": "float-number",
-      "x": 414,
-      "y": 610,
+      "x": 410,
+      "y": 564,
       "hue": 80,
       "imports": [],
       "exports": [
@@ -154,8 +154,8 @@
       "id": "float-number-03",
       "name": "浮点数值",
       "type": "float-number",
-      "x": 414,
-      "y": 722,
+      "x": 410,
+      "y": 690,
       "hue": 80,
       "imports": [],
       "exports": [
@@ -171,8 +171,8 @@
       "id": "float-number-04",
       "name": "浮点数值",
       "type": "float-number",
-      "x": 414,
-      "y": 836,
+      "x": 410,
+      "y": 818,
       "hue": 80,
       "imports": [],
       "exports": [
@@ -188,8 +188,8 @@
       "id": "float-number-05",
       "name": "浮点数值",
       "type": "float-number",
-      "x": 414,
-      "y": 950,
+      "x": 410,
+      "y": 946,
       "hue": 80,
       "imports": [],
       "exports": [
@@ -206,7 +206,7 @@
       "name": "浮点数值",
       "type": "float-number",
       "x": 412,
-      "y": 1064,
+      "y": 1078,
       "hue": 80,
       "imports": [],
       "exports": [
@@ -222,8 +222,8 @@
       "id": "float-number-07",
       "name": "浮点数值",
       "type": "float-number",
-      "x": 412,
-      "y": 1176,
+      "x": 410,
+      "y": 1208,
       "hue": 80,
       "imports": [],
       "exports": [
@@ -240,7 +240,7 @@
       "name": "创建振荡器节点",
       "type": "oscillator-creator",
       "x": 792,
-      "y": 60,
+      "y": 18,
       "width": 280,
       "hue": 180,
       "imports": [
@@ -271,8 +271,8 @@
       "id": "oscillator-creator-02",
       "name": "创建振荡器节点",
       "type": "oscillator-creator",
-      "x": 792,
-      "y": 210,
+      "x": 794,
+      "y": 186,
       "width": 280,
       "hue": 180,
       "imports": [
@@ -304,7 +304,7 @@
       "name": "创建振荡器节点",
       "type": "oscillator-creator",
       "x": 792,
-      "y": 360,
+      "y": 352,
       "width": 280,
       "hue": 180,
       "imports": [
@@ -336,7 +336,7 @@
       "name": "创建振荡器节点",
       "type": "oscillator-creator",
       "x": 794,
-      "y": 508,
+      "y": 516,
       "width": 280,
       "hue": 180,
       "imports": [
@@ -368,7 +368,7 @@
       "name": "创建振荡器节点",
       "type": "oscillator-creator",
       "x": 794,
-      "y": 658,
+      "y": 682,
       "width": 280,
       "hue": 180,
       "imports": [
@@ -399,8 +399,8 @@
       "id": "oscillator-creator-06",
       "name": "创建振荡器节点",
       "type": "oscillator-creator",
-      "x": 796,
-      "y": 806,
+      "x": 794,
+      "y": 854,
       "width": 280,
       "hue": 180,
       "imports": [
@@ -431,8 +431,8 @@
       "id": "oscillator-creator-07",
       "name": "创建振荡器节点",
       "type": "oscillator-creator",
-      "x": 794,
-      "y": 956,
+      "x": 792,
+      "y": 1024,
       "width": 280,
       "hue": 180,
       "imports": [

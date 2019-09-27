@@ -17,6 +17,8 @@ renderers.exec = ag.addGlass();
 renderers.analyser = ag.addGlass();
 renderers.controller = ag.addGlass();
 
+let portSize = 6 * devicePixelRatio;
+
 loadData('data.json')
   .then(data => {
     let width = data.width || 800;
@@ -31,7 +33,6 @@ loadData('data.json')
     // 标题栏内边距
     let namePadding = 6 * devicePixelRatio;
 
-    let portSize = 8 * devicePixelRatio;
     let portMargin = portSize * .8;
     let hostTBPadding = portMargin;
     let hostLRPadding = namePadding;
@@ -288,6 +289,7 @@ ag.subscribe(function rendererSubscribe(actor) {
         })
         renderers.port.render();
         renderers.link.scene.children.forEach(link => {
+          link.updateBound();
           link.updatePath();
         })
         renderers.link.render();
@@ -360,10 +362,10 @@ function updateNodeLinkLight() {
   renderers.link.scene.children.forEach(link => {
     let light = link.updateLight();
     let _l = new airglass.BezierLine(link.startPoint, link.endPoint);
+    _l.lineWidth = 1 * devicePixelRatio;
     let lg = renderers.linkLight.ctx.createLinearGradient(light.p1.x, light.p1.y, light.p2.x, light.p2.y);
     lg.addColorStop(0, 'transparent');
-    lg.addColorStop(.4, '#fff');
-    lg.addColorStop(.6, '#fff');
+    lg.addColorStop(.5, '#fff');
     lg.addColorStop(1, 'transparent');
     _l.stroke = lg;
     _l.updatePath();
@@ -371,6 +373,8 @@ function updateNodeLinkLight() {
   })
   renderers.linkLight.render();
 }
+
+setInterval(updateNodeLinkLight, 60);
 
 function createLineBySourcePort(sourcePort, targetPort) {
   sourcePort._targetPort = targetPort;
@@ -382,8 +386,8 @@ function createLineBySourcePort(sourcePort, targetPort) {
     targetPort
   )
   link.updatePath();
-  link.stroke = `hsla(${sourcePort._node._hue}, 100%, 50%, .3)`;
-  link.lineWidth = 3;
+  link.stroke = `hsla(${sourcePort._node._hue}, 100%, 50%, .2)`;
+  link.lineWidth = 2 * devicePixelRatio;
   renderers.link.scene.add(link);
   renderers.link.render();
 }
@@ -410,8 +414,8 @@ function deleteLineByTargetPorts() {
 
 function exportData() {
   let data = {
-    width: rendererManager.canvasWidth,
-    height: rendererManager.canvasHeight,
+    width: ag.rendererManager.canvasWidth,
+    height: ag.rendererManager.canvasHeight,
     hosts: renderers.node.scene.children.map(hostChild => {
       return {
         id: hostChild._id,
